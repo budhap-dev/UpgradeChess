@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useSettings } from '@/shared/hooks/useSettings'
 import { db } from '@/shared/db/db'
 import { useToast } from '@/shared/ui/toastStore'
@@ -38,7 +39,7 @@ export default function SettingsPage() {
           </select>
         </label>
         <p className="muted" style={{ fontSize: 14 }}>Public profiles only — ratings are read from the open APIs and snapshotted daily on this device. No passwords, no login.</p>
-        <button className="btn primary" onClick={save}>Save</button>
+        <div className="row"><button className="btn primary" onClick={save}>Save</button><Link className="btn ghost" to="/welcome">Rerun the assessment</Link></div>
       </div>
       <div className="card stack">
         <h3>Board & pieces</h3>

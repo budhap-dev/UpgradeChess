@@ -13,6 +13,8 @@ const Library = lazy(() => import('@/features/library/LibraryPage'))
 const Settings = lazy(() => import('@/features/settings/SettingsPage'))
 const Badges = lazy(() => import('@/features/progress/BadgesPage'))
 const Tricks = lazy(() => import('@/features/tricks/TricksPage'))
+const Onboarding = lazy(() => import('@/features/onboarding/OnboardingPage'))
+const MasterGames = lazy(() => import('@/features/library/MasterGamesPage'))
 const Review = lazy(() => import('@/features/review/ReviewPage'))
 const GameReview = lazy(() => import('@/features/review/GameReviewPage'))
 
@@ -38,6 +40,9 @@ export function App() {
           <Route path="review" element={<Review />} />
           <Route path="review/:id" element={<GameReview />} />
           <Route path="library" element={<Library />} />
+          <Route path="library/games" element={<MasterGames />} />
+          <Route path="library/games/:gameId" element={<MasterGames />} />
+          <Route path="welcome" element={<Onboarding />} />
           <Route path="settings" element={<Settings />} />
         </Route>
       </Routes>
