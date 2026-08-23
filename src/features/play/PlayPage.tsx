@@ -10,16 +10,22 @@ import { XP } from '@/config/scoring'
 import { useToast } from '@/shared/ui/toastStore'
 import { ENDGAMES } from '@/features/path/endgames'
 
-/** Graded levels: Stockfish skill level + move time. Approximate strength labels. */
-const LEVELS = [
-  { id: 1, label: 'Beginner · ~800', skill: 0, ms: 150 },
-  { id: 2, label: 'Casual · ~1100', skill: 3, ms: 250 },
-  { id: 3, label: 'Club · ~1400', skill: 6, ms: 350 },
-  { id: 4, label: 'Strong club · ~1700', skill: 9, ms: 500 },
-  { id: 5, label: 'Expert · ~2000', skill: 13, ms: 700 },
-  { id: 6, label: 'Master · ~2300', skill: 17, ms: 1000 },
-  { id: 7, label: 'Full strength', skill: 20, ms: 1500 },
-]
+/**
+ * Graded levels = Stockfish "Skill Level" + move time. Stockfish skill levels are not calibrated to any human
+ * rating system, so the equivalents below are rough estimates (playing strength varies a lot with the time
+ * control and with how the engine's errors happen to fall). Lichess ratings run ~150–250 above Chess.com
+ * rapid at club level; FIDE classical is typically a little below Chess.com rapid.
+ */
+export const LEVELS = [
+  { id: 1, label: 'Beginner', skill: 0, ms: 150, est: { lichess: 1000, chesscom: 700, fide: null } },
+  { id: 2, label: 'Casual', skill: 3, ms: 250, est: { lichess: 1300, chesscom: 1050, fide: 1000 } },
+  { id: 3, label: 'Club', skill: 6, ms: 350, est: { lichess: 1550, chesscom: 1350, fide: 1250 } },
+  { id: 4, label: 'Strong club', skill: 9, ms: 500, est: { lichess: 1850, chesscom: 1650, fide: 1550 } },
+  { id: 5, label: 'Expert', skill: 13, ms: 700, est: { lichess: 2100, chesscom: 1950, fide: 1850 } },
+  { id: 6, label: 'Master', skill: 17, ms: 1000, est: { lichess: 2400, chesscom: 2250, fide: 2150 } },
+  { id: 7, label: 'Full strength', skill: 20, ms: 1500, est: { lichess: null, chesscom: null, fide: null } },
+] as const
+const fmt = (v: number | null) => (v == null ? '—' : `~${v}`)
 
 export default function PlayPage() {
   const [sp] = useSearchParams()
@@ -119,8 +125,19 @@ export default function PlayPage() {
             {result ? <h3>{result}</h3> : <h3>{chessRef.current.turn() === color[0] ? 'Your move' : 'Engine to move'}</h3>}
             {engineErr && <p style={{ color: 'var(--bad)' }}>Engine failed to load: {engineErr}</p>}
             <label>Level
-              <select className="input" value={level} onChange={(e) => setLevel(Number(e.target.value))}>{LEVELS.map((l) => <option key={l.id} value={l.id}>{l.label}</option>)}</select>
+              <select className="input" value={level} onChange={(e) => setLevel(Number(e.target.value))}>{LEVELS.map((l) => <option key={l.id} value={l.id}>{l.id}. {l.label}{l.est.lichess ? ` · Lichess ${fmt(l.est.lichess)} · Chess.com ${fmt(l.est.chesscom)} · FIDE ${fmt(l.est.fide)}` : l.id === 7 ? ' · 3000+' : ''}</option>)}</select>
             </label>
+            <div className="card flat" style={{ padding: '8px 12px' }}>
+              <div className="eyebrow">Estimated strength · {lvl.label}</div>
+              {lvl.id === 7 ? <p className="muted" style={{ fontSize: 14, marginTop: 4 }}>Full engine strength — far beyond any human rating on every system.</p> : (
+                <div className="row" style={{ marginTop: 6, gap: 6 }}>
+                  <span className="pill mono">Lichess {fmt(lvl.est.lichess)}</span>
+                  <span className="pill mono">Chess.com {fmt(lvl.est.chesscom)}</span>
+                  <span className="pill mono">FIDE {fmt(lvl.est.fide)}</span>
+                </div>
+              )}
+              <p className="muted" style={{ fontSize: 12, marginTop: 6 }}>Rough equivalents: Stockfish skill levels aren't calibrated to human ratings, and strength varies with the time control. Lichess ≈ Chess.com rapid + 150–250; FIDE ≈ a bit under Chess.com rapid.</p>
+            </div>
             {!endgame && <label>Play as
               <select className="input" value={color} onChange={(e) => { const s = e.target.value as 'white' | 'black'; setColor(s); reset(s) }}><option value="white">White</option><option value="black">Black</option></select>
             </label>}
