@@ -56,6 +56,33 @@ check('Quiz reveals best move + category', /Engine preferred \S+/.test(await tex
 await page.click('text=Exit quiz'); await page.click('text=Mark reviewed'); await page.waitForTimeout(400)
 check('Game marked reviewed', (await text()).includes('Reviewed ✓'))
 
+// Storm: start, solve a couple from the pack, verify counter
+await page.goto(base + '/puzzles?mode=storm'); await page.waitForTimeout(500); await page.click('text=Start storm')
+for (let r = 0; r < 2; r++) {
+  await page.waitForSelector('[data-status="solving"]', { timeout: 15000 })
+  const sid = await page.getAttribute('.board-wrap', 'data-puzzle-id'); const sp = byId.get(sid); if (!sp) break
+  for (let i = 0; i < sp.solution.length; i += 2) { await tap(sp.solution[i].slice(0, 2), sp.solution[i].slice(2, 4)); await page.waitForTimeout(600) }
+  await page.waitForTimeout(800)
+}
+check('Storm counts solves', Number(/(\d+)\s*solved · combo/.exec(await text())?.[1] ?? 0) >= 1, /\d+\s*solved · combo \d+/.exec(await text())?.[0])
+
+// Woodpecker: create set and start a cycle
+await page.goto(base + '/puzzles?mode=woodpecker'); await page.waitForTimeout(500)
+await page.click('text=Create my set'); await page.waitForTimeout(800); await page.click('text=Start cycle 1')
+await page.waitForSelector('[data-status="solving"]', { timeout: 15000 })
+check('Woodpecker cycle starts', /Cycle 1 · 0\/60/.test(await text()))
+
+await page.goto(base + '/badges'); await page.waitForTimeout(800)
+check('Badges page shows earned badges', /First blood/.test(await text()) && /\d+\/\d+/.test(await text()))
+
+// Tricks: open Légal's mate, test me, play Nxe5
+await page.goto(base + '/tricks/legal'); await page.waitForTimeout(600)
+await page.click('text=Test me'); await page.waitForTimeout(300)
+await tap('f3', 'e5'); await page.waitForTimeout(500)
+check('Trick test accepts key move', (await text()).includes('✓ Exactly'))
+await page.goto(base + '/tricks'); await page.waitForTimeout(500)
+check('Tricks list shows tested count', /1\/\d+ tested/.test(await text()))
+
 check('No page errors', errors.length === 0, errors.join(' | '))
 await browser.close()
 process.exit(failures ? 1 : 0)

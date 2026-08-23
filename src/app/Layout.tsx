@@ -26,6 +26,7 @@ export function Layout() {
           {NAV.map((n) => <NavLink key={n.to} to={n.to} end={n.to === '/'} className={({ isActive }) => (isActive ? 'active' : '')}>{n.label}</NavLink>)}
           <NavLink to="/play" className={({ isActive }) => (isActive ? 'active' : '')}>Play</NavLink>
           <NavLink to="/openings" className={({ isActive }) => (isActive ? 'active' : '')}>Openings</NavLink>
+          <NavLink to="/tricks" className={({ isActive }) => (isActive ? 'active' : '')}>Tricks</NavLink>
           <NavLink to="/library" className={({ isActive }) => (isActive ? 'active' : '')}>Library</NavLink>
           <NavLink to="/settings" className={({ isActive }) => (isActive ? 'active' : '')}>Settings</NavLink>
         </nav>

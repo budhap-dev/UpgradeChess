@@ -71,7 +71,7 @@ export const CURRICULUM: PathNode[] = [
   { id: 't-sacrifice-set', track: 'tactics', band: 'club', kind: 'themed-set', xp: 80, requires: ['t-attraction-set'], theme: 'sacrifice', target: { count: 12, accuracy: 65 }, title: 'Drill: sacrifices', blurb: 'Give material for mate, a decisive attack, or more material back.' },
   { id: 't-trapped-set', track: 'tactics', band: 'club', kind: 'themed-set', xp: 60, requires: ['t-deflection-set'], theme: 'trappedPiece', target: { count: 10, accuracy: 70 }, title: 'Drill: trapped pieces', blurb: 'A piece with no safe squares. Hunt it.' },
   // ───────────── TACTICS · Strong club ─────────────
-  { id: 't-zwischenzug-set', track: 'tactics', band: 'strong', kind: 'themed-set', xp: 80, requires: ['t-sacrifice-set'], theme: 'zwischenzug', target: { count: 10, accuracy: 65 }, title: 'Drill: zwischenzug', blurb: 'The in-between move that changes everything before the expected recapture.' },
+  { id: 't-zwischenzug-set', track: 'tactics', band: 'strong', kind: 'themed-set', xp: 80, requires: ['t-sacrifice-set'], theme: 'intermezzo', target: { count: 10, accuracy: 65 }, title: 'Drill: zwischenzug', blurb: 'The in-between move that changes everything before the expected recapture.' },
   { id: 't-promotion-set', track: 'tactics', band: 'strong', kind: 'themed-set', xp: 80, requires: ['t-sacrifice-set'], theme: 'advancedPawn', target: { count: 10, accuracy: 70 }, title: 'Drill: promotion tactics', blurb: 'Passed pawns are tactical weapons, not only endgame assets.' },
 
   // ───────────── ENDGAMES ─────────────
