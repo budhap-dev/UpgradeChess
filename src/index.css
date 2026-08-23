@@ -163,3 +163,6 @@ p { margin: 0; }
   .trainer-status .row { margin-top: 8px !important; }
   .board-wrap.trainer-board { width: min(100%, calc(100dvh - 330px)); min-width: min(100%, 260px); }
 }
+.sync-dot { display: inline-flex; align-items: center; gap: 6px; text-decoration: none; margin-left: auto; margin-right: 8px; }
+.sync-dot .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--good); box-shadow: 0 0 0 2px var(--surface); }
+.sync-dot .dot.warn { background: var(--warn); } .sync-dot .dot.bad { background: var(--bad); }

@@ -6,6 +6,7 @@ import { useToast } from '@/shared/ui/toastStore'
 import { Board } from '@/shared/ui/Board'
 import { BOARD_THEMES, PIECE_SETS, pieceUrl } from '@/config/boardThemes'
 import { sfx } from '@/shared/ui/sound'
+import { AccountCard } from './AccountCard'
 
 export default function SettingsPage() {
   const [settings, update] = useSettings()
@@ -21,6 +22,14 @@ export default function SettingsPage() {
     await Promise.all([db.xpEvents.clear(), db.puzzleAttempts.clear(), db.playerRating.clear(), db.externalRatings.clear(), db.progress.clear(), db.srsCards.clear(), db.badges.clear()])
     show('Progress reset')
   }
+  const importData = async (file: File) => {
+    try {
+      const d = JSON.parse(await file.text())
+      const { mergeDumps, dumpLocal, applyDump } = await import('@/shared/sync/sync')
+      const remote = { v: 1 as const, exportedAt: Date.parse(d.exportedAt ?? '') || 0, xpEvents: d.xpEvents ?? [], puzzleAttempts: d.puzzleAttempts ?? [], playerRating: d.playerRating ?? [], externalRatings: d.externalRatings ?? [], progress: d.progress ?? [], srsCards: d.srsCards ?? [], settings: d.settings ?? [], badges: d.badges ?? [], games: d.games ?? [] }
+      await applyDump(mergeDumps(await dumpLocal(), remote)); show('Imported and merged')
+    } catch (e) { show('Import failed: ' + (e as Error).message) }
+  }
   const exportData = async () => {
     const dump = { exportedAt: new Date().toISOString(), xpEvents: await db.xpEvents.toArray(), puzzleAttempts: await db.puzzleAttempts.toArray(), playerRating: await db.playerRating.toArray(), externalRatings: await db.externalRatings.toArray(), progress: await db.progress.toArray(), srsCards: await db.srsCards.toArray(), settings: await db.settings.toArray() }
     const blob = new Blob([JSON.stringify(dump, null, 2)], { type: 'application/json' })
@@ -30,6 +39,7 @@ export default function SettingsPage() {
   return (
     <div className="stack" style={{ maxWidth: 640 }}>
       <div className="page-head"><div><div className="eyebrow">Profile</div><h1>Settings</h1></div></div>
+      <AccountCard />
       <div className="card stack">
         <label>Lichess username<input className="input" value={liVal} onChange={(e) => setLi(e.target.value)} placeholder="e.g. BudhaP" /></label>
         <label>Chess.com username<input className="input" value={ccVal} onChange={(e) => setCc(e.target.value)} placeholder="optional" /></label>
@@ -83,7 +93,7 @@ export default function SettingsPage() {
       <div className="card stack">
         <h3>Data</h3>
         <p className="muted" style={{ fontSize: 14 }}>Everything is stored locally in your browser (IndexedDB). Export a backup before switching devices.</p>
-        <div className="row"><button className="btn" onClick={exportData}>Export JSON</button><button className="btn" style={{ color: 'var(--bad)' }} onClick={reset}>Reset progress</button></div>
+        <div className="row"><button className="btn" onClick={exportData}>Export JSON</button><label className="btn">Import JSON<input type="file" accept="application/json" style={{ display: 'none' }} onChange={(e) => { const f = e.target.files?.[0]; if (f) void importData(f) }} /></label><button className="btn" style={{ color: 'var(--bad)' }} onClick={reset}>Reset progress</button></div>
       </div>
     </div>
   )

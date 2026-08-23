@@ -18,7 +18,9 @@ A fast, offline-capable chess training app — React 19 + TypeScript + Vite, ins
 | **Progress** | XP, levels (Pawn → Grandmaster), **36 badges**, daily goal, streaks with milestone bonuses, accuracy-by-motif heatmap, and **rating reflection**: live Lichess + Chess.com ratings (public APIs, no login), snapshotted daily for trend sparklines, with a plain-language reading of what to work on. |
 | **Library** | Motif encyclopaedia, weekly training template, curated platforms/videos/books. |
 
-All data is local (IndexedDB via Dexie). Export/reset from Settings.
+All data is local (IndexedDB via Dexie) and works offline. **Optional Google sign-in + cloud sync** (Supabase) merges progress across devices — see [docs/DEPLOY.md](docs/DEPLOY.md). Export/Import/Reset from Settings.
+
+**Deploy:** one-click on Vercel (`vercel.json` included) — [docs/DEPLOY.md](docs/DEPLOY.md).
 
 ## Run
 
