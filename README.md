@@ -1,0 +1,56 @@
+# UpgradeChess
+
+A fast, offline-capable chess training app — React 19 + TypeScript + Vite, installable as a PWA on phone or desktop.
+
+**Plan & spec:** [docs/UpgradeChess-Plan.md](docs/UpgradeChess-Plan.md)
+
+## What it does (v0.1)
+
+| Area | Feature |
+|---|---|
+| **Puzzles** | Rated tactics with an internal **Glicko-2** rating, themed drills (17 motifs), Streak mode, hints, retry, solution replay. Offline starter pack + Lichess API when online. |
+| **Learning path** | Tracks (tactics · endgames · openings · strategy) × bands (Foundation / Club / Strong club). Interactive lessons with "your move" checkpoints, themed-set drills judged from your puzzle history, endgame conversions vs engine, opening repertoires. Nodes unlock on prerequisites. |
+| **Openings** | Four built-in repertoires (Italian, London, Caro-Kann, QGD) as move trees; **SM-2 spaced repetition** per position; Lichess opening explorer ("what do others play?"). |
+| **Play** | Stockfish 18 (WASM, web worker) at 7 graded levels; endgame trainer positions verified against the Lichess tablebase. |
+| **Progress** | XP, levels (Pawn → Grandmaster), daily goal, streaks with milestone bonuses, accuracy-by-motif heatmap, and **rating reflection**: live Lichess + Chess.com ratings (public APIs, no login), snapshotted daily for trend sparklines, with a plain-language reading of what to work on. |
+| **Library** | Motif encyclopaedia, weekly training template, curated platforms/videos/books. |
+
+All data is local (IndexedDB via Dexie). Export/reset from Settings.
+
+## Run
+
+```bash
+npm install
+npm run dev          # http://localhost:5173  (copies the Stockfish build into public/engine first)
+npm test             # vitest: rating math, SRS, XP/streaks, puzzle conversion, curriculum integrity, progression
+npm run build && npm run preview
+```
+
+Optional:
+
+```bash
+npm run ratings -- <lichessUser> [chesscomUser]   # print ratings in the terminal
+npm run puzzles:pack -- 40                          # grow public/data/puzzles.json from the Lichess API (rate-limited; resumable)
+```
+
+## Structure
+
+```
+src/
+  app/            router + layout
+  config/         scoring.ts (XP rules), levels.ts, themes.ts (motifs)
+  features/       home · puzzles · path (curriculum, lessons, progression) · openings · play · progress · library · settings
+  shared/
+    api/          lichess.ts, chesscom.ts (zod-typed, read-only)
+    chess/        puzzle conversion + move checking
+    db/           Dexie schema, XP/streak logic
+    engine/       UCI client for the Stockfish worker
+    rating/       glicko2.ts, sm2.ts
+    ui/           Board (drag + tap-to-move), Sparkline, Toast
+scripts/          ratings.mjs, build-puzzle-pack.mjs, copy-engine.mjs
+public/data/      offline puzzle pack (CC0, from Lichess)
+```
+
+## Credits
+
+Puzzles: [Lichess puzzle database](https://database.lichess.org/#puzzles) (CC0). Engine: [Stockfish.js](https://github.com/nmrugg/stockfish.js) (GPLv3). Board: react-chessboard. Ratings: Lichess and Chess.com public APIs.
