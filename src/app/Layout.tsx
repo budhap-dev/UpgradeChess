@@ -2,6 +2,7 @@ import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { Toast } from '@/shared/ui/Toast'
 import { useSettings } from '@/shared/hooks/useSettings'
+import { useAuth } from '@/shared/sync/useAuth'
 
 const NAV = [
   { to: '/', label: 'Home', ico: '⌂' },
@@ -22,6 +23,7 @@ const MORE = [
 
 export function Layout() {
   const [settings] = useSettings()
+  const auth = useAuth()
   const [more, setMore] = useState(false)
   const loc = useLocation()
   useEffect(() => { setMore(false) }, [loc.pathname])
@@ -36,6 +38,11 @@ export function Layout() {
     <div className="shell">
       <header className="topbar">
         <NavLink to="/" className="brand"><span className="knight">♞</span>UpgradeChess</NavLink>
+        {auth.configured && (
+          <NavLink to="/settings" className="sync-dot" title={auth.user ? `Signed in as ${auth.user.email} · ${auth.syncStatus}` : 'Sign in to sync'} aria-label="Account">
+            {auth.user ? <span className={`dot ${auth.syncStatus === 'error' ? 'bad' : auth.syncStatus === 'pending' || auth.syncStatus === 'syncing' ? 'warn' : 'good'}`} /> : <span className="muted" style={{ fontSize: 13 }}>Sign in</span>}
+          </NavLink>
+        )}
         <button className="btn sm ghost more-btn" aria-expanded={more} aria-controls="more-sheet" onClick={() => setMore((v) => !v)}>{more ? 'Close' : 'More ☰'}</button>
         <nav className="topnav" aria-label="Primary">
           {NAV.map((n) => <NavLink key={n.to} to={n.to} end={n.to === '/'} className={({ isActive }) => (isActive ? 'active' : '')}>{n.label}</NavLink>)}
