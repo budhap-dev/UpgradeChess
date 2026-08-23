@@ -4,6 +4,7 @@ import { usePlayerRating } from '@/shared/hooks/usePlayerRating'
 import { useSettings } from '@/shared/hooks/useSettings'
 import { usePuzzleSession, type Mode, type SessionOptions } from './usePuzzleSession'
 import { MOTIF_LABEL } from '@/config/themes'
+import { sfx, haptic } from '@/shared/ui/sound'
 
 const HINT: CSSProperties = { boxShadow: 'inset 0 0 0 4px var(--info)' }
 const WRONG: CSSProperties = { background: 'color-mix(in srgb, var(--bad) 55%, transparent)' }
@@ -21,15 +22,15 @@ export function PuzzleTrainer({ mode, theme, options, autoAdvanceMs, locked, asi
   const solving = state.status === 'solving' && !locked
   const finished = state.status === 'solved' || state.status === 'failed'
   const isRated = mode === 'rated' || mode === 'themed'
+  useEffect(() => { if (state.status === 'solved') { sfx.success(); haptic(30) } else if (state.status === 'failed') { sfx.fail(); haptic([40, 60, 40]) } }, [state.status])
   useEffect(() => { if (finished && autoAdvanceMs && !locked) { const t = setTimeout(next, autoAdvanceMs); return () => clearTimeout(t) } }, [finished, autoAdvanceMs, locked, next, state.puzzle?.id])
 
   return (
-    <div className="two-col">
-      <div className="board-wrap" data-puzzle-id={p?.id} data-status={state.status}>
+    <div className="trainer">
+      <div className="board-wrap trainer-board" data-puzzle-id={p?.id} data-status={state.status}>
         <Board fen={state.fen} orientation={orientation} interactive={solving} onMove={onMove} lastMove={state.lastMove} highlights={highlights} id="puzzle" />
       </div>
-      <div className="stack">
-        <div className="card">
+      <div className="card trainer-status">
           {state.status === 'loading' && <p className="muted">Finding a puzzle…</p>}
           {state.status === 'empty' && <p>No puzzles available for this mode.</p>}
           {(state.status === 'intro' || state.status === 'solving') && p && (
@@ -68,9 +69,8 @@ export function PuzzleTrainer({ mode, theme, options, autoAdvanceMs, locked, asi
               {finished && <button className="btn primary" onClick={next}>Next puzzle →</button>}
             </div>
           )}
-        </div>
-        {aside}
       </div>
+      <div className="trainer-aside">{aside}</div>
     </div>
   )
 }
