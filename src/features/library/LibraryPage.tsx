@@ -33,6 +33,10 @@ export default function LibraryPage() {
           {MOTIFS.map((m, i) => <Link key={m.key} to={`/puzzles/${m.key}`} className="node available"><span className="mark mono" style={{ fontSize: 13 }}>{String(i + 1).padStart(2, '0')}</span><span><strong>{m.label}</strong><br /><span className="muted" style={{ fontSize: 14 }}>{m.blurb}</span></span></Link>)}
         </ul>
       </div>
+      <Link to="/library/games" className="card" style={{ textDecoration: 'none', color: 'inherit' }}>
+        <h3>♚ Annotated master games</h3>
+        <p className="muted" style={{ fontSize: 14, marginTop: 4 }}>The Opera Game, the Immortal Game, Réti–Tartakower, the Game of the Century, Lasker–Bauer — with notes at the key moments and guess-the-move checkpoints.</p>
+      </Link>
       <Link to="/tricks" className="card" style={{ textDecoration: 'none', color: 'inherit' }}>
         <h3>⚡ Gambits & quick tricks</h3>
         <p className="muted" style={{ fontSize: 14, marginTop: 4 }}>Légal's mate, the Fried Liver, the Stafford and Englund traps, the Elephant and Lasker traps, Noah's Ark, the Siberian trap, Evans / Danish / Smith-Morra / King's gambits and more — each with a step-through line and a test.</p>

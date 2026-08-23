@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import { Link, Navigate } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '@/shared/db/db'
 import { DAILY_GOAL } from '@/config/scoring'
@@ -12,7 +12,7 @@ import { CURRICULUM } from '@/features/path/curriculum'
 import { useBadges } from '@/shared/hooks/useBadges'
 
 export default function HomePage() {
-  const [settings] = useSettings()
+  const [settings, , settingsReady] = useSettings()
   const tactics = usePlayerRating('tactics')
   const li = useLichessRatings(settings.lichessUser)
   const today = useLiveQuery(() => todayProgress(), []) ?? { puzzles: 0, lessonsOrDrills: 0, goalHit: false }
@@ -29,12 +29,13 @@ export default function HomePage() {
   const rapid = li.data?.rows.find((r) => r.perf === 'rapid')?.rating
   const hour = new Date().getHours()
   const greet = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'
+  if (settingsReady && !settings.onboarded) return <Navigate to="/welcome" replace />
 
   return (
     <div className="stack">
       <div className="page-head">
         <div><div className="eyebrow">{new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' })}</div><h1>{greet}{settings.lichessUser ? `, ${settings.lichessUser}` : ''}.</h1></div>
-        {!settings.onboarded && <Link to="/settings" className="btn sm">Set up profile →</Link>}
+
       </div>
 
       <div className="card" style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>

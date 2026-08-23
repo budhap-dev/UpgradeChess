@@ -12,10 +12,10 @@ export const DEFAULT_SETTINGS: Settings = {
   ratingSystem: 'lichess',
 }
 
-export function useSettings(): [Settings, (patch: Partial<Settings>) => Promise<void>] {
+export function useSettings(): [Settings, (patch: Partial<Settings>) => Promise<void>, boolean] {
   const rows = useLiveQuery(() => db.settings.toArray(), [])
   const settings: Settings = { ...DEFAULT_SETTINGS }
   for (const r of rows ?? []) if (r.key in settings) (settings as unknown as Record<string, unknown>)[r.key] = r.value
   const update = async (patch: Partial<Settings>) => { for (const [k, v] of Object.entries(patch)) await setSetting(k, v) }
-  return [settings, update]
+  return [settings, update, rows !== undefined]
 }

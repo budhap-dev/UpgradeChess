@@ -98,6 +98,24 @@ await mob.click('text=More'); await mob.waitForTimeout(300)
 check('Mobile: More sheet opens with Settings', await mob.isVisible('#more-sheet >> text=Settings'))
 await mob.close()
 
+// Onboarding wizard on a fresh profile
+const fresh = await browser.newPage({ viewport: { width: 1200, height: 900 } })
+await fresh.goto(base + '/'); await fresh.waitForTimeout(800)
+check('Fresh profile is redirected to /welcome', fresh.url().endsWith('/welcome'))
+await fresh.click('text=Start →'); await fresh.fill('input[placeholder="e.g. BudhaP"]', 'BudhaP'); await fresh.click('text=Save & continue'); await fresh.waitForTimeout(400)
+await fresh.click('text=Skip calibration'); await fresh.click('text=Continue →'); await fresh.waitForTimeout(300)
+check('Onboarding reaches the band summary', /You're in the \w+/.test((await fresh.textContent('main')).replace(/\s+/g, ' ')))
+await fresh.click('text=Go to my dashboard'); await fresh.waitForTimeout(800)
+check('Onboarding lands on Home', /Today's goal/.test(await fresh.textContent('main')))
+await fresh.close()
+
+// Master game: Opera game, step to the first guess (ply 19 = Nxb5) and play it
+await page.goto(base + '/library/games/opera'); await page.waitForTimeout(500)
+for (let i = 0; i < 19; i++) { await page.keyboard.press('ArrowRight'); await page.waitForTimeout(60) }
+check('Master game asks for a guess', (await page.getAttribute('.board-wrap', 'data-guessing')) === 'ask')
+await tap('c3', 'b5'); await page.waitForTimeout(400)
+check('Correct guess advances the game', (await page.getAttribute('.board-wrap', 'data-ply')) === '19' && /Guesses 1\//.test(await text()))
+
 check('No page errors', errors.length === 0, errors.join(' | '))
 await browser.close()
 process.exit(failures ? 1 : 0)
