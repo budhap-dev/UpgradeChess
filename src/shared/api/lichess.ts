@@ -48,3 +48,26 @@ export async function fetchExplorer(fen: string, ratings = [1600, 1800, 2000], s
   if (!r.ok) throw new Error(`Explorer responded ${r.status}`)
   return Explorer.parse(await r.json())
 }
+
+/** Games export (NDJSON). Lichess allows one export stream at a time per IP. */
+export const LichessGame = z.object({
+  id: z.string(), rated: z.boolean().optional(), speed: z.string().optional(), perf: z.string().optional(),
+  createdAt: z.number(), status: z.string().optional(), winner: z.enum(['white', 'black']).optional(),
+  players: z.object({
+    white: z.object({ user: z.object({ name: z.string() }).optional(), rating: z.number().optional(), aiLevel: z.number().optional() }),
+    black: z.object({ user: z.object({ name: z.string() }).optional(), rating: z.number().optional(), aiLevel: z.number().optional() }),
+  }),
+  opening: z.object({ eco: z.string(), name: z.string(), ply: z.number().optional() }).optional(),
+  moves: z.string().default(''),
+})
+export type LichessGame = z.infer<typeof LichessGame>
+
+export async function fetchLichessGames(username: string, max = 20, signal?: AbortSignal): Promise<LichessGame[]> {
+  const u = new URL(`${BASE}/api/games/user/${encodeURIComponent(username)}`)
+  u.searchParams.set('max', String(max)); u.searchParams.set('opening', 'true'); u.searchParams.set('perfType', 'rapid,classical,blitz'); u.searchParams.set('rated', 'true')
+  const r = await fetch(u, { headers: { Accept: 'application/x-ndjson' }, signal })
+  if (r.status === 404) return []
+  if (!r.ok) throw new Error(r.status === 429 ? 'Lichess is busy (one export at a time) — try again in a minute' : `Lichess responded ${r.status}`)
+  const text = await r.text()
+  return text.split('\n').filter((l) => l.trim()).map((l) => LichessGame.parse(JSON.parse(l)))
+}

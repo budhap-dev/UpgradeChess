@@ -3,7 +3,7 @@
 import { chromium } from 'playwright'
 import { readFileSync } from 'node:fs'
 
-const base = process.env.BASE_URL ?? 'http://localhost:4173'
+const base = process.env.BASE_URL ?? 'http://localhost:4199'
 const pack = JSON.parse(readFileSync(new URL('../public/data/puzzles.json', import.meta.url), 'utf8'))
 const byId = new Map(pack.map((p) => [p.id, p]))
 const browser = await chromium.launch()
@@ -43,6 +43,18 @@ if (pz) {
   const t = await text()
   check('Rated puzzle solved with rating + XP', (await page.getAttribute('.board-wrap', 'data-status')) === 'solved' && /[+-]\d+ rating/.test(t) && /\+\d+ XP/.test(t), /[+-]\d+ rating/.exec(t)?.[0])
 } else console.log('· puzzle came from Lichess online, skipping solve check')
+
+// Game review: paste a PGN, analyse with the engine, quiz, mark reviewed
+const PGN = '[White "Me"]\n[Black "Opp"]\n[Result "0-1"]\n\n1. e4 e5 2. Nf3 Nc6 3. Bc4 Nf6 4. Ng5 d5 5. exd5 Nxd5 6. Nxf7 Kxf7 7. Qf3+ Ke6 8. Nc3 Nb4 9. a3 Nxc2+ 10. Kd1 Nxa1 11. Nxd5 Kd6 12. d4 Qe8 13. Bf4 exf4 14. Re1 Qd7 15. Qe4 Kc6 16. Qxf4 Bd6 17. Qxa1 Re8 0-1'
+await page.goto(base + '/review'); await page.waitForTimeout(500)
+await page.click('text=Paste PGN'); await page.fill('textarea', PGN); await page.click('text=Add game'); await page.waitForTimeout(500)
+await page.click('text=vs Opp'); await page.waitForTimeout(500)
+await page.click('text=Analyse with engine'); await page.waitForSelector('text=Guess the moves', { timeout: 180000 })
+check('Engine analysis finds blunders', /\d+ \?\?/.test(await text()))
+await page.click('text=Guess the moves'); await page.waitForTimeout(400); await page.click('text=Show answer'); await page.waitForTimeout(300)
+check('Quiz reveals best move + category', /Engine preferred \S+/.test(await text()) && /Category:/.test(await text()))
+await page.click('text=Exit quiz'); await page.click('text=Mark reviewed'); await page.waitForTimeout(400)
+check('Game marked reviewed', (await text()).includes('Reviewed ✓'))
 
 check('No page errors', errors.length === 0, errors.join(' | '))
 await browser.close()

@@ -28,3 +28,31 @@ export async function fetchChesscomStats(username: string, signal?: AbortSignal)
   if (d.tactics?.highest?.rating) out.push({ perf: 'puzzles (best)', rating: d.tactics.highest.rating })
   return out
 }
+
+export const ChesscomGame = z.object({
+  url: z.string(), pgn: z.string(), time_class: z.string(), end_time: z.number(), rated: z.boolean().optional(), rules: z.string().optional(),
+  white: z.object({ username: z.string(), rating: z.number().optional(), result: z.string() }),
+  black: z.object({ username: z.string(), rating: z.number().optional(), result: z.string() }),
+})
+export type ChesscomGame = z.infer<typeof ChesscomGame>
+
+/** Most recent games from the latest monthly archive(s). */
+export async function fetchChesscomGames(username: string, max = 20, signal?: AbortSignal): Promise<ChesscomGame[]> {
+  const u = username.toLowerCase()
+  const ar = await fetch(`${BASE}/player/${encodeURIComponent(u)}/games/archives`, { signal })
+  if (ar.status === 404) return []
+  if (!ar.ok) throw new Error(`Chess.com responded ${ar.status}`)
+  const { archives } = (await ar.json()) as { archives: string[] }
+  const out: ChesscomGame[] = []
+  for (const url of archives.slice().reverse().slice(0, 2)) {
+    const r = await fetch(url, { signal })
+    if (!r.ok) continue
+    const { games } = (await r.json()) as { games: unknown[] }
+    for (const g of games.slice().reverse()) {
+      const parsed = ChesscomGame.safeParse(g)
+      if (parsed.success && (parsed.data.rules ?? 'chess') === 'chess' && parsed.data.time_class !== 'bullet') out.push(parsed.data)
+      if (out.length >= max) return out
+    }
+  }
+  return out
+}

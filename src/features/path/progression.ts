@@ -44,8 +44,8 @@ export const ICON: Record<PathNode['kind'], string> = { lesson: '📖', 'themed-
 export interface Recommendation { id: string; title: string; route: string; reason: string; xp: number; icon: string }
 
 /** Ranked next steps: due SRS cards › weakest motif › first available path node per track. */
-export function nextRecommended(input: { progress: NodeProgress[]; attempts: PuzzleAttempt[]; dueCards: number; nodes: PathNode[] }): Recommendation[] {
-  const { progress, attempts, dueCards, nodes } = input
+export function nextRecommended(input: { progress: NodeProgress[]; attempts: PuzzleAttempt[]; dueCards: number; nodes: PathNode[]; reviewBacklog?: number }): Recommendation[] {
+  const { progress, attempts, dueCards, nodes, reviewBacklog = 0 } = input
   const states = nodeStates(nodes, progress, attempts)
   const recs: Recommendation[] = []
   if (dueCards > 0) recs.push({ id: 'srs', title: `Review ${dueCards} opening card${dueCards > 1 ? 's' : ''}`, route: '/openings', reason: 'Spaced repetition is due — 5 XP per card.', xp: Math.min(100, dueCards * 5), icon: '♙' })
@@ -55,6 +55,7 @@ export function nextRecommended(input: { progress: NodeProgress[]; attempts: Puz
   for (const a of recent) for (const t of a.themes) { if (!MOTIF_LABEL[t]) continue; const s = byTheme.get(t) ?? { n: 0, ok: 0 }; s.n++; if (a.solved) s.ok++; byTheme.set(t, s) }
   const weak = [...byTheme.entries()].filter(([, s]) => s.n >= 6).map(([t, s]) => ({ t, pct: s.ok / s.n, n: s.n })).sort((a, b) => a.pct - b.pct)[0]
   if (weak && weak.pct < 0.7) recs.push({ id: 'weak', title: `Themed puzzles: ${MOTIF_LABEL[weak.t]}`, route: `/puzzles/${weak.t}`, reason: `Your weakest motif lately (${Math.round(weak.pct * 100)}% over ${weak.n}).`, xp: 60, icon: '♞' })
+  if (reviewBacklog > 0) recs.push({ id: 'review', title: `Review ${reviewBacklog} game${reviewBacklog > 1 ? 's' : ''}`, route: '/review', reason: 'Analyse, guess the better moves, log the error type — 70 XP per game.', xp: 70, icon: '✎' })
   const seenTrack = new Set<string>()
   for (const n of nodes) {
     const st = states[n.id].state

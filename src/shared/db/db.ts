@@ -9,6 +9,17 @@ export interface NodeProgress { nodeId: string; status: 'available' | 'in-progre
 export interface SrsCard { id: string; repertoireId: string; fen: string; move: string; san: string; ease: number; interval: number; reps: number; due: number }
 export interface Setting { key: string; value: unknown }
 export interface Badge { badgeId: string; earnedAt: number }
+export type ErrorCategory = 'opening' | 'tactic' | 'plan' | 'endgame'
+export interface GameError { ply: number; san: string; best: string; bestSan: string; fenBefore: string; lossPct: number; severity: 'inaccuracy' | 'mistake' | 'blunder'; category: ErrorCategory; evalBefore: number; evalAfter: number }
+export interface MoveEval { ply: number; san: string; cp: number; mate?: number; best: string }  // cp from White's perspective, after the move
+export interface StoredGame {
+  id: string; source: 'lichess' | 'chesscom' | 'pgn'; url?: string
+  white: string; black: string; whiteRating?: number; blackRating?: number; result: '1-0' | '0-1' | '1/2-1/2' | '*'
+  speed: string; playedAt: number; opening?: string; moves: string  // SAN moves, space-separated
+  userColor: 'w' | 'b'
+  analysed: boolean; reviewed: boolean; evals?: MoveEval[]; errors?: GameError[]
+  summary?: { acpl: number; inaccuracies: number; mistakes: number; blunders: number }
+}
 
 export const DAY_KEY = (ts = Date.now()) => new Date(ts).toISOString().slice(0, 10)
 
@@ -21,6 +32,7 @@ class UpgradeChessDB extends Dexie {
   srsCards!: EntityTable<SrsCard, 'id'>
   settings!: EntityTable<Setting, 'key'>
   badges!: EntityTable<Badge, 'badgeId'>
+  games!: EntityTable<StoredGame, 'id'>
   constructor() {
     super('upgradechess')
     this.version(1).stores({
@@ -33,6 +45,7 @@ class UpgradeChessDB extends Dexie {
       settings: 'key',
       badges: 'badgeId',
     })
+    this.version(2).stores({ games: 'id, source, playedAt, analysed, reviewed' })
   }
 }
 export const db = new UpgradeChessDB()
