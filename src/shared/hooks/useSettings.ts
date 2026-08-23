@@ -4,10 +4,12 @@ import { db, setSetting } from '@/shared/db/db'
 export interface Settings {
   lichessUser: string; chesscomUser: string; theme: 'system' | 'light' | 'dark'; boardFlipAuto: boolean; onboarded: boolean
   boardTheme: string; pieceSet: string; showCoordinates: boolean; animations: boolean; sounds: boolean; haptics: boolean
+  ratingSystem: 'lichess' | 'chesscom' | 'fide'
 }
 export const DEFAULT_SETTINGS: Settings = {
   lichessUser: '', chesscomUser: '', theme: 'system', boardFlipAuto: true, onboarded: false,
   boardTheme: 'tournament', pieceSet: 'default', showCoordinates: true, animations: true, sounds: true, haptics: true,
+  ratingSystem: 'lichess',
 }
 
 export function useSettings(): [Settings, (patch: Partial<Settings>) => Promise<void>] {

@@ -32,6 +32,11 @@ export default function SettingsPage() {
       <div className="card stack">
         <label>Lichess username<input className="input" value={liVal} onChange={(e) => setLi(e.target.value)} placeholder="e.g. BudhaP" /></label>
         <label>Chess.com username<input className="input" value={ccVal} onChange={(e) => setCc(e.target.value)} placeholder="optional" /></label>
+        <label>Show estimated ratings as
+          <select className="input" value={settings.ratingSystem} onChange={(e) => update({ ratingSystem: e.target.value as 'lichess' | 'chesscom' | 'fide' })}>
+            <option value="lichess">Lichess</option><option value="chesscom">Chess.com</option><option value="fide">FIDE</option>
+          </select>
+        </label>
         <p className="muted" style={{ fontSize: 14 }}>Public profiles only — ratings are read from the open APIs and snapshotted daily on this device. No passwords, no login.</p>
         <button className="btn primary" onClick={save}>Save</button>
       </div>
