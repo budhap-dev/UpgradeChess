@@ -8,7 +8,7 @@ import { puzzleXp } from '@/config/scoring'
 import { addXp, checkDailyAwards } from '@/shared/db/xp'
 import { useToast } from '@/shared/ui/toastStore'
 
-export type Mode = 'rated' | 'themed' | 'streak'
+export type Mode = 'rated' | 'themed' | 'streak' | 'storm' | 'woodpecker'
 export type Status = 'loading' | 'intro' | 'solving' | 'solved' | 'failed' | 'empty'
 
 export interface SessionState {
@@ -27,10 +27,15 @@ export interface SessionState {
   practice: boolean       // retry after a fail: no rating/XP
 }
 
-export function usePuzzleSession(mode: Mode, theme: string | undefined, playerRating: number) {
+export interface SessionOptions { queue?: Puzzle[]; onResult?: (solved: boolean, puzzle: Puzzle) => void }
+
+export function usePuzzleSession(mode: Mode, theme: string | undefined, playerRating: number, options: SessionOptions = {}) {
   const chessRef = useRef(new Chess())
   const [s, setS] = useState<SessionState>({ puzzle: null, fen: new Chess().fen(), status: 'loading', step: 0, lastMove: null, hints: 0, hintSquare: null, ratingDelta: null, xpGained: null, streakCount: 0, wrongSquare: null, startedAt: 0, practice: false })
   const streakRef = useRef(0)
+  const queueIdx = useRef(0)
+  const stormCount = useRef(0)
+  const optsRef = useRef(options); optsRef.current = options
   const ratingRef = useRef(playerRating)
   useEffect(() => { ratingRef.current = playerRating }, [playerRating])
   const show = useToast((t) => t.show)
@@ -42,7 +47,10 @@ export function usePuzzleSession(mode: Mode, theme: string | undefined, playerRa
     setS((p) => ({ ...p, status: 'loading', ratingDelta: null, xpGained: null, hints: 0, hintSquare: null, wrongSquare: null, practice: false }))
     let target = ratingRef.current
     if (mode === 'streak') target = 800 + streakRef.current * 60
-    const puzzle = await nextPuzzle({ theme: mode === 'themed' ? theme : undefined, targetRating: target })
+    if (mode === 'storm') target = 700 + stormCount.current * 45
+    let puzzle: Puzzle | null
+    if (mode === 'woodpecker') { const q = optsRef.current.queue ?? []; puzzle = q[queueIdx.current] ?? null; if (!puzzle) { setS((p) => ({ ...p, status: 'empty' })); return } }
+    else puzzle = await nextPuzzle({ theme: mode === 'themed' ? theme : undefined, targetRating: target, exclude: mode === 'storm' ? new Set() : undefined })
     if (!puzzle) { setS((p) => ({ ...p, status: 'empty' })); return }
     const chess = new Chess(puzzle.fen)
     chessRef.current = chess
@@ -57,7 +65,7 @@ export function usePuzzleSession(mode: Mode, theme: string | undefined, playerRa
 
   const finish = useCallback(async (solved: boolean, st: SessionState) => {
     const puzzle = st.puzzle!
-    const isRated = mode !== 'streak'
+    const isRated = mode === 'rated' || mode === 'themed'
     const prev = (await db.playerRating.get('tactics')) ?? { kind: 'tactics' as const, ...DEFAULT_GLICKO, updatedAt: 0 }
     let delta: number | null = null
     if (isRated && st.hints === 0) {
@@ -65,10 +73,13 @@ export function usePuzzleSession(mode: Mode, theme: string | undefined, playerRa
       await db.playerRating.put({ kind: 'tactics', ...next, updatedAt: Date.now() })
       delta = Math.round(next.rating - prev.rating)
     }
-    const xp = puzzleXp({ solved, puzzleRating: puzzle.rating, playerRating: prev.rating, hints: st.hints })
+    const xp = mode === 'storm' || mode === 'woodpecker' ? 0 : puzzleXp({ solved, puzzleRating: puzzle.rating, playerRating: prev.rating, hints: st.hints })
     await db.puzzleAttempts.add({ puzzleId: puzzle.id, rating: puzzle.rating, solved, timeMs: Date.now() - st.startedAt, hints: st.hints, themes: puzzle.themes, ts: Date.now(), day: DAY_KEY(), ratingAfter: delta == null ? prev.rating : prev.rating + delta })
-    await addXp(solved ? 'puzzle_solved' : 'puzzle_failed', xp, puzzle.id)
+    if (xp > 0) await addXp(solved ? 'puzzle_solved' : 'puzzle_failed', xp, puzzle.id)
     if (mode === 'streak') { if (solved) streakRef.current += 1; else streakRef.current = 0 }
+    if (mode === 'storm' && solved) stormCount.current += 1
+    if (mode === 'woodpecker') queueIdx.current += 1
+    optsRef.current.onResult?.(solved, puzzle)
     setS((p) => ({ ...p, status: solved ? 'solved' : 'failed', ratingDelta: delta, xpGained: xp, streakCount: streakRef.current }))
     const msgs = await checkDailyAwards()
     msgs.forEach((m, i) => later(() => show(m), 400 + i * 1800))
@@ -133,5 +144,7 @@ export function usePuzzleSession(mode: Mode, theme: string | undefined, playerRa
     setS((p) => ({ ...p, fen: chess.fen(), lastMove: mv ? { from: mv.from, to: mv.to } : null, status: 'solving', step: 0, wrongSquare: null, practice: true }))
   }, [])
 
-  return { state: s, onMove, next: load, hint, showSolution, retry }
+  const restart = useCallback(() => { streakRef.current = 0; queueIdx.current = 0; stormCount.current = 0; setS((p) => ({ ...p, streakCount: 0 })); void load() }, [load])
+
+  return { state: s, onMove, next: load, hint, showSolution, retry, restart }
 }

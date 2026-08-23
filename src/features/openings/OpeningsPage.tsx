@@ -129,6 +129,10 @@ export default function OpeningsPage() {
       <div className="stack">
         <div className="page-head"><div><div className="eyebrow">Repertoire</div><h1>Openings</h1></div>{due > 0 && <span className="pill warn">{due} cards due</span>}</div>
         <p className="muted">Ideas first, then the moves. Each repertoire is a small tree of lines; you drill it with spaced repetition and earn XP for every due card you recall.</p>
+        <Link to="/tricks" className="card" style={{ textDecoration: 'none', color: 'inherit' }}>
+          <div className="row" style={{ justifyContent: 'space-between' }}><h3>⚡ Gambits & quick tricks</h3><span className="btn sm">Open →</span></div>
+          <p className="muted" style={{ fontSize: 14, marginTop: 4 }}>Traps to set, traps to dodge, and gambits worth playing — step-through lines with a test on the key move.</p>
+        </Link>
         <div className="grid cols-2">
           {REPERTOIRES.map((r) => {
             const t = buildTree(r)

@@ -9,6 +9,7 @@ import { Sparkline } from '@/shared/ui/Sparkline'
 import { activeDays, computeStreak, totalXp } from '@/shared/db/xp'
 import { useLichessRatings, useChesscomRatings, type PerfRow } from './useExternalRatings'
 import { useState } from 'react'
+import { useBadges } from '@/shared/hooks/useBadges'
 
 function bandFor(rapid: number | undefined, tactics: number): { name: string; note: string } {
   const r = rapid ?? tactics - 200
@@ -31,6 +32,8 @@ export default function ProgressPage() {
   const attempts = useLiveQuery(() => db.puzzleAttempts.orderBy('ts').reverse().limit(300).toArray(), []) ?? []
   const history = useLiveQuery(() => db.externalRatings.orderBy('ts').toArray(), []) ?? []
   const lvl = levelForXp(xp)
+  const { badges, earnedCount } = useBadges()
+  const recentBadges = badges.filter((b) => b.earned).slice(-6)
 
   const ratingSeries = [...attempts].reverse().filter((a) => a.hints === 0).map((a) => a.ratingAfter)
   const solved = attempts.filter((a) => a.solved).length
@@ -124,6 +127,15 @@ export default function ProgressPage() {
         {cc.data?.notFound && <p style={{ color: 'var(--bad)' }}>No Chess.com user "{settings.chesscomUser}".</p>}
         {cc.data && !cc.data.notFound && (cc.data.rows.length ? <PerfTable rows={cc.data.rows} /> : <p className="muted" style={{ marginTop: 8 }}>No rated games on this account yet.</p>)}
       </div>
+
+      <Link to="/badges" className="card" style={{ textDecoration: 'none', color: 'inherit' }}>
+        <div className="row" style={{ justifyContent: 'space-between' }}>
+          <h3>Badges</h3><span className="pill accent mono">{earnedCount}/{badges.length}</span>
+        </div>
+        <div className="row" style={{ marginTop: 8 }}>
+          {recentBadges.length ? recentBadges.map((b) => <span key={b.def.id} className="pill good">{b.def.icon} {b.def.title}</span>) : <span className="muted">Solve, review and keep your streak to earn badges.</span>}
+        </div>
+      </Link>
 
       <div className="card">
         <h3>What this says</h3>

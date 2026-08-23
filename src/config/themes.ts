@@ -11,7 +11,7 @@ export const MOTIFS: { key: string; label: string; blurb: string }[] = [
   { key: 'deflection', label: 'Deflection', blurb: 'Drag a defender away from its job.' },
   { key: 'attraction', label: 'Decoy / attraction', blurb: 'Lure a piece (often the king) onto a fatal square.' },
   { key: 'sacrifice', label: 'Sacrifices', blurb: 'Give material for a bigger gain — mate, a decisive attack, or more material back.' },
-  { key: 'zwischenzug', label: 'Zwischenzug', blurb: 'An in-between move that changes everything before the expected recapture.' },
+  { key: 'intermezzo', label: 'Zwischenzug', blurb: 'An in-between move that changes everything before the expected recapture.' },
   { key: 'trappedPiece', label: 'Trapped pieces', blurb: 'A piece with no safe squares. Hunt it.' },
   { key: 'advancedPawn', label: 'Promotion tactics', blurb: 'Passed pawns are tactical weapons, not only endgame assets.' },
   { key: 'endgame', label: 'Endgame tactics', blurb: 'Precise calculation when few pieces remain.' },

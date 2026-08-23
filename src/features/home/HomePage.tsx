@@ -9,6 +9,7 @@ import { useSettings } from '@/shared/hooks/useSettings'
 import { useLichessRatings } from '@/features/progress/useExternalRatings'
 import { nextRecommended } from '@/features/path/progression'
 import { CURRICULUM } from '@/features/path/curriculum'
+import { useBadges } from '@/shared/hooks/useBadges'
 
 export default function HomePage() {
   const [settings] = useSettings()
@@ -22,6 +23,7 @@ export default function HomePage() {
   const due = useLiveQuery(() => db.srsCards.where('due').belowOrEqual(Date.now()).count(), []) ?? 0
   const unreviewed = useLiveQuery(() => db.games.filter((g) => !g.reviewed).count(), []) ?? 0
   const lvl = levelForXp(xp)
+  useBadges()
   const rec = nextRecommended({ progress, attempts, dueCards: due, nodes: CURRICULUM, reviewBacklog: unreviewed })
   const pct = Math.min(100, Math.round(((Math.min(today.puzzles, DAILY_GOAL.puzzles) / DAILY_GOAL.puzzles) * 0.7 + (Math.min(today.lessonsOrDrills, DAILY_GOAL.lessonsOrDrills) / DAILY_GOAL.lessonsOrDrills) * 0.3) * 100))
   const rapid = li.data?.rows.find((r) => r.perf === 'rapid')?.rating
@@ -57,6 +59,7 @@ export default function HomePage() {
       <div className="row">
         <Link to="/play" className="btn">♔ Play vs engine</Link>
         <Link to="/openings" className="btn">♙ Openings</Link>
+        <Link to="/tricks" className="btn">⚡ Gambits & tricks</Link>
         <Link to="/library" className="btn">Library</Link>
       </div>
 
