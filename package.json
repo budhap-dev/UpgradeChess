@@ -9,7 +9,7 @@
     "prebuild": "node scripts/copy-engine.mjs",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "preview": "vite preview",
+    "preview": "vite preview --port 4199 --strictPort",
     "test": "vitest run",
     "test:watch": "vitest",
     "puzzles:pack": "node scripts/build-puzzle-pack.mjs",

@@ -20,8 +20,9 @@ export default function HomePage() {
   const progress = useLiveQuery(() => db.progress.toArray(), []) ?? []
   const attempts = useLiveQuery(() => db.puzzleAttempts.orderBy('ts').reverse().limit(100).toArray(), []) ?? []
   const due = useLiveQuery(() => db.srsCards.where('due').belowOrEqual(Date.now()).count(), []) ?? 0
+  const unreviewed = useLiveQuery(() => db.games.filter((g) => !g.reviewed).count(), []) ?? 0
   const lvl = levelForXp(xp)
-  const rec = nextRecommended({ progress, attempts, dueCards: due, nodes: CURRICULUM })
+  const rec = nextRecommended({ progress, attempts, dueCards: due, nodes: CURRICULUM, reviewBacklog: unreviewed })
   const pct = Math.min(100, Math.round(((Math.min(today.puzzles, DAILY_GOAL.puzzles) / DAILY_GOAL.puzzles) * 0.7 + (Math.min(today.lessonsOrDrills, DAILY_GOAL.lessonsOrDrills) / DAILY_GOAL.lessonsOrDrills) * 0.3) * 100))
   const rapid = li.data?.rows.find((r) => r.perf === 'rapid')?.rating
   const hour = new Date().getHours()
@@ -49,8 +50,14 @@ export default function HomePage() {
       <div className="grid cols-2">
         <Link to="/puzzles" className="card" style={{ textDecoration: 'none', color: 'inherit' }}><div className="eyebrow">Puzzles</div><div className="stat"><span className="v">{Math.round(tactics.rating)}</span><span className="l">tactics rating · solve rated</span></div></Link>
         <Link to="/progress" className="card" style={{ textDecoration: 'none', color: 'inherit' }}><div className="eyebrow">Lichess rapid</div><div className="stat"><span className="v">{rapid ?? '—'}</span><span className="l">{settings.lichessUser ? 'live from lichess.org' : 'connect username'}</span></div></Link>
-        <Link to="/play" className="card" style={{ textDecoration: 'none', color: 'inherit' }}><div className="eyebrow">Play</div><div className="stat"><span className="v">♔</span><span className="l">vs engine, graded levels</span></div></Link>
+        <Link to="/review" className="card" style={{ textDecoration: 'none', color: 'inherit' }}><div className="eyebrow">Review</div><div className="stat"><span className="v">{unreviewed}</span><span className="l">{unreviewed === 1 ? 'game to review' : 'games to review'} · <span style={{ color: 'var(--accent)' }}>play ♔</span></span></div></Link>
         <Link to="/openings" className="card" style={{ textDecoration: 'none', color: 'inherit' }}><div className="eyebrow">Openings</div><div className="stat"><span className="v">{due}</span><span className="l">repertoire cards due</span></div></Link>
+      </div>
+
+      <div className="row">
+        <Link to="/play" className="btn">♔ Play vs engine</Link>
+        <Link to="/openings" className="btn">♙ Openings</Link>
+        <Link to="/library" className="btn">Library</Link>
       </div>
 
       <div className="card">

@@ -11,6 +11,8 @@ const Openings = lazy(() => import('@/features/openings/OpeningsPage'))
 const Play = lazy(() => import('@/features/play/PlayPage'))
 const Library = lazy(() => import('@/features/library/LibraryPage'))
 const Settings = lazy(() => import('@/features/settings/SettingsPage'))
+const Review = lazy(() => import('@/features/review/ReviewPage'))
+const GameReview = lazy(() => import('@/features/review/GameReviewPage'))
 
 const Loading = () => <p className="muted" style={{ padding: 24 }}>Loading…</p>
 
@@ -28,6 +30,8 @@ export function App() {
           <Route path="openings" element={<Openings />} />
           <Route path="openings/:repId" element={<Openings />} />
           <Route path="play" element={<Play />} />
+          <Route path="review" element={<Review />} />
+          <Route path="review/:id" element={<GameReview />} />
           <Route path="library" element={<Library />} />
           <Route path="settings" element={<Settings />} />
         </Route>
