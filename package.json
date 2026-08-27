@@ -14,7 +14,8 @@
     "test:watch": "vitest",
     "puzzles:pack": "node scripts/build-puzzle-pack.mjs",
     "ratings": "node scripts/ratings.mjs",
-    "e2e": "node e2e/smoke.mjs"
+    "e2e": "node e2e/smoke.mjs",
+    "audit": "node scripts/audit-tasks.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.112.3",

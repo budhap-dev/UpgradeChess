@@ -15,7 +15,7 @@ export interface TrainerProps { mode: Mode; theme?: string; options?: SessionOpt
 export function PuzzleTrainer({ mode, theme, options, autoAdvanceMs, locked, aside }: TrainerProps) {
   const rating = usePlayerRating('tactics')
   const [settings] = useSettings()
-  const { state, onMove, next, hint, showSolution, retry, view } = usePuzzleSession(mode, theme, rating.rating, options)
+  const { state, onMove, next, hint, showSolution, retry, view } = usePuzzleSession(mode, theme, rating.rating, { ...options, persist: (mode === 'rated' || mode === 'themed') && !autoAdvanceMs && !options?.queue })
   const highlights = useMemo(() => { const h: Record<string, CSSProperties> = {}; if (state.hintSquare) h[state.hintSquare] = HINT; if (state.wrongSquare) h[state.wrongSquare] = WRONG; return h }, [state.hintSquare, state.wrongSquare])
   const p = state.puzzle
   const viewing = state.viewIdx !== null

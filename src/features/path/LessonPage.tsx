@@ -50,7 +50,8 @@ export default function LessonPage() {
 
   if (!node || !steps.length) return <p>Lesson not found. <Link to="/path">Back to path</Link></p>
 
-  const orientation = chessRef.current.turn() === 'b' && step.task ? 'black' : 'white'
+  // orient to the side that solves the task, fixed for the whole step (never flips mid-line)
+  const orientation = step.task ? (new Chess(step.task.fen).turn() === 'b' ? 'black' : 'white') : 'white'
 
   const onMove = (from: string, to: string, promotion?: string) => {
     const t = step.task
