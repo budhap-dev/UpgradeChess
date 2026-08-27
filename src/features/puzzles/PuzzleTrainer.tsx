@@ -15,20 +15,26 @@ export interface TrainerProps { mode: Mode; theme?: string; options?: SessionOpt
 export function PuzzleTrainer({ mode, theme, options, autoAdvanceMs, locked, aside }: TrainerProps) {
   const rating = usePlayerRating('tactics')
   const [settings] = useSettings()
-  const { state, onMove, next, hint, showSolution, retry } = usePuzzleSession(mode, theme, rating.rating, options)
+  const { state, onMove, next, hint, showSolution, retry, view } = usePuzzleSession(mode, theme, rating.rating, options)
   const highlights = useMemo(() => { const h: Record<string, CSSProperties> = {}; if (state.hintSquare) h[state.hintSquare] = HINT; if (state.wrongSquare) h[state.wrongSquare] = WRONG; return h }, [state.hintSquare, state.wrongSquare])
   const p = state.puzzle
+  const viewing = state.viewIdx !== null
+  const shown = viewing ? state.history[state.viewIdx!] : null
   const orientation = settings.boardFlipAuto && p ? (p.sideToMove === 'w' ? 'white' : 'black') : 'white'
-  const solving = state.status === 'solving' && !locked
+  const solving = state.status === 'solving' && !locked && !viewing
   const finished = state.status === 'solved' || state.status === 'failed'
   const isRated = mode === 'rated' || mode === 'themed'
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'ArrowLeft') view(-1); if (e.key === 'ArrowRight') view(1) }
+    window.addEventListener('keydown', onKey); return () => window.removeEventListener('keydown', onKey)
+  }, [view])
   useEffect(() => { if (state.status === 'solved') { sfx.success(); haptic(30) } else if (state.status === 'failed') { sfx.fail(); haptic([40, 60, 40]) } }, [state.status])
   useEffect(() => { if (finished && autoAdvanceMs && !locked) { const t = setTimeout(next, autoAdvanceMs); return () => clearTimeout(t) } }, [finished, autoAdvanceMs, locked, next, state.puzzle?.id])
 
   return (
     <div className="trainer">
       <div className="board-wrap trainer-board" data-puzzle-id={p?.id} data-status={state.status}>
-        <Board fen={state.fen} orientation={orientation} interactive={solving} onMove={onMove} lastMove={state.lastMove} highlights={highlights} id="puzzle" />
+        <Board fen={shown ? shown.fen : state.fen} orientation={orientation} interactive={solving} onMove={onMove} lastMove={shown ? shown.lastMove : state.lastMove} highlights={viewing ? {} : highlights} id="puzzle" />
       </div>
       <div className="card trainer-status">
           {state.status === 'loading' && <p className="muted">Finding a puzzle…</p>}
@@ -63,6 +69,13 @@ export function PuzzleTrainer({ mode, theme, options, autoAdvanceMs, locked, asi
           )}
           {!autoAdvanceMs && (
             <div className="row" style={{ marginTop: 12 }}>
+              {state.history.length > 1 && state.status !== 'intro' && (
+                <>
+                  <button className="btn sm" onClick={() => view(-1)} disabled={(state.viewIdx ?? state.history.length - 1) === 0} title="Back one move (←)" aria-label="Back one move">◀</button>
+                  <button className="btn sm" onClick={() => view(1)} disabled={!viewing} title="Forward one move (→)" aria-label="Forward one move">▶</button>
+                  {viewing && <span className="pill warn mono" style={{ cursor: 'pointer' }} onClick={() => view(null)}>{state.viewIdx}/{state.history.length - 1} · {shown?.san} · live ↩</span>}
+                </>
+              )}
               {solving && isRated && <button className="btn" onClick={hint}>Hint{state.hints ? ` (${state.hints})` : ''}</button>}
               {state.status === 'failed' && isRated && <button className="btn" onClick={retry}>Retry</button>}
               {state.status === 'failed' && state.step < (p?.solution.length ?? 0) && <button className="btn" onClick={showSolution}>Show solution</button>}
