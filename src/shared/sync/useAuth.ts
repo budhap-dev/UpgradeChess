@@ -70,8 +70,11 @@ export function useAuth() {
   const signInWithGoogle = async () => {
     const sb = supabase(); if (!sb) return
     setBusy(true)
-    const { error } = await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin + '/settings' } })
-    if (error) { s.set({ syncStatus: 'error', syncError: error.message }); setBusy(false) }
+    // skipBrowserRedirect + manual navigation guarantees the PKCE verifier is flushed to storage before we leave (Safari race).
+    const { data, error } = await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin + '/settings', skipBrowserRedirect: true } })
+    if (error || !data?.url) { s.set({ syncStatus: 'error', syncError: error?.message ?? 'Could not start sign-in' }); setBusy(false); return }
+    await new Promise((r) => setTimeout(r, 200))
+    window.location.assign(data.url)
   }
   const signOut = async () => { const sb = supabase(); if (!sb) return; await sb.auth.signOut(); syncedForUser = null; s.set({ session: null, syncStatus: 'idle' }) }
   const syncNowManual = async () => { const uid = s.session?.user.id; if (!uid) return; s.set({ syncStatus: 'syncing' }); try { await syncNow(uid); s.set({ syncStatus: 'synced', lastSyncAt: Date.now(), syncError: undefined }) } catch (e) { s.set({ syncStatus: 'error', syncError: (e as Error).message }) } }
