@@ -25,13 +25,15 @@ export interface SessionState {
   wrongSquare: string | null
   startedAt: number
   practice: boolean       // retry after a fail: no rating/XP
+  history: { fen: string; lastMove: { from: string; to: string } | null; san: string }[]  // every position seen this puzzle
+  viewIdx: number | null  // non-null = reviewing a past position (board locked)
 }
 
 export interface SessionOptions { queue?: Puzzle[]; onResult?: (solved: boolean, puzzle: Puzzle) => void }
 
 export function usePuzzleSession(mode: Mode, theme: string | undefined, playerRating: number, options: SessionOptions = {}) {
   const chessRef = useRef(new Chess())
-  const [s, setS] = useState<SessionState>({ puzzle: null, fen: new Chess().fen(), status: 'loading', step: 0, lastMove: null, hints: 0, hintSquare: null, ratingDelta: null, xpGained: null, streakCount: 0, wrongSquare: null, startedAt: 0, practice: false })
+  const [s, setS] = useState<SessionState>({ puzzle: null, fen: new Chess().fen(), status: 'loading', step: 0, lastMove: null, hints: 0, hintSquare: null, ratingDelta: null, xpGained: null, streakCount: 0, wrongSquare: null, startedAt: 0, practice: false, history: [], viewIdx: null })
   const streakRef = useRef(0)
   const queueIdx = useRef(0)
   const stormCount = useRef(0)
@@ -54,10 +56,11 @@ export function usePuzzleSession(mode: Mode, theme: string | undefined, playerRa
     if (!puzzle) { setS((p) => ({ ...p, status: 'empty' })); return }
     const chess = new Chess(puzzle.fen)
     chessRef.current = chess
-    setS((p) => ({ ...p, puzzle, fen: chess.fen(), status: 'intro', step: 0, lastMove: null, startedAt: Date.now() }))
+    setS((p) => ({ ...p, puzzle, fen: chess.fen(), status: 'intro', step: 0, lastMove: null, startedAt: Date.now(), history: [{ fen: chess.fen(), lastMove: null, san: 'start' }], viewIdx: null }))
     later(() => {
       const mv = chess.move(uciToMove(puzzle.opponentMove))
-      setS((p) => ({ ...p, fen: chess.fen(), lastMove: mv ? { from: mv.from, to: mv.to } : null, status: 'solving', startedAt: Date.now() }))
+      const last = mv ? { from: mv.from, to: mv.to } : null
+      setS((p) => ({ ...p, fen: chess.fen(), lastMove: last, status: 'solving', startedAt: Date.now(), history: [...p.history, { fen: chess.fen(), lastMove: last, san: mv?.san ?? '' }] }))
     }, 600)
   }, [mode, theme])
 
@@ -104,14 +107,15 @@ export function usePuzzleSession(mode: Mode, theme: string | undefined, playerRa
     const mv = chess.move({ from, to, promotion })
     const nextStep = state.step + 1
     const done = nextStep >= state.puzzle.solution.length
-    const after: SessionState = { ...state, fen: chess.fen(), lastMove: { from: mv.from, to: mv.to }, step: nextStep, hintSquare: null }
+    const after: SessionState = { ...state, fen: chess.fen(), lastMove: { from: mv.from, to: mv.to }, step: nextStep, hintSquare: null, viewIdx: null, history: [...state.history, { fen: chess.fen(), lastMove: { from: mv.from, to: mv.to }, san: mv.san }] }
     stateRef.current = after
     setS(after)
     if (done) { if (state.practice) setS({ ...after, status: 'solved' }); else void finish(true, after) }
     else {
       later(() => {
         const reply = chess.move(uciToMove(state.puzzle!.solution[nextStep]))
-        setS((p) => ({ ...p, fen: chess.fen(), lastMove: reply ? { from: reply.from, to: reply.to } : null, step: nextStep + 1 }))
+        const rl = reply ? { from: reply.from, to: reply.to } : null
+        setS((p) => ({ ...p, fen: chess.fen(), lastMove: rl, step: nextStep + 1, history: [...p.history, { fen: chess.fen(), lastMove: rl, san: reply?.san ?? '' }] }))
       }, 350)
     }
     return true
@@ -127,12 +131,22 @@ export function usePuzzleSession(mode: Mode, theme: string | undefined, playerRa
   const showSolution = useCallback(() => {
     const st = stateRef.current
     if (!st.puzzle || st.status !== 'failed') return
+    const pid = st.puzzle.id
     const chess = new Chess(st.puzzle.fen)
-    chess.move(uciToMove(st.puzzle.opponentMove))
-    let last: { from: string; to: string } | null = null
-    for (const u of st.puzzle.solution) { const m = chess.move(uciToMove(u)); if (m) last = { from: m.from, to: m.to } }
+    const setup = chess.move(uciToMove(st.puzzle.opponentMove))
     chessRef.current = chess
-    setS((p) => ({ ...p, fen: chess.fen(), lastMove: last, wrongSquare: null, step: p.puzzle!.solution.length }))
+    const setupLast = setup ? { from: setup.from, to: setup.to } : null
+    setS((p) => ({ ...p, fen: chess.fen(), lastMove: setupLast, wrongSquare: null, step: 0, viewIdx: null, history: [{ fen: st.puzzle!.fen, lastMove: null, san: 'start' }, { fen: chess.fen(), lastMove: setupLast, san: setup?.san ?? '' }] }))
+    // replay the solution one move at a time so the idea is visible
+    st.puzzle.solution.forEach((u, i) => {
+      later(() => {
+        if (stateRef.current.puzzle?.id !== pid) return // user moved on to another puzzle
+        const m = chess.move(uciToMove(u))
+        if (!m) return
+        const lm = { from: m.from, to: m.to }
+        setS((p) => ({ ...p, fen: chess.fen(), lastMove: lm, step: i + 1, history: [...p.history, { fen: chess.fen(), lastMove: lm, san: m.san }] }))
+      }, 600 + i * 700)
+    })
   }, [])
 
   const retry = useCallback(() => {
@@ -141,10 +155,21 @@ export function usePuzzleSession(mode: Mode, theme: string | undefined, playerRa
     const chess = new Chess(st.puzzle.fen)
     const mv = chess.move(uciToMove(st.puzzle.opponentMove))
     chessRef.current = chess
-    setS((p) => ({ ...p, fen: chess.fen(), lastMove: mv ? { from: mv.from, to: mv.to } : null, status: 'solving', step: 0, wrongSquare: null, practice: true }))
+    const last = mv ? { from: mv.from, to: mv.to } : null
+    setS((p) => ({ ...p, fen: chess.fen(), lastMove: last, status: 'solving', step: 0, wrongSquare: null, practice: true, viewIdx: null, history: [{ fen: st.puzzle!.fen, lastMove: null, san: 'start' }, { fen: chess.fen(), lastMove: last, san: mv?.san ?? '' }] }))
+  }, [])
+
+  /** Step through what already happened: delta -1/+1, or null to jump back to the live position. */
+  const view = useCallback((delta: number | null) => {
+    setS((p) => {
+      if (delta === null) return { ...p, viewIdx: null }
+      const cur = p.viewIdx ?? p.history.length - 1
+      const next = Math.max(0, Math.min(p.history.length - 1, cur + delta))
+      return { ...p, viewIdx: next >= p.history.length - 1 ? null : next }
+    })
   }, [])
 
   const restart = useCallback(() => { streakRef.current = 0; queueIdx.current = 0; stormCount.current = 0; setS((p) => ({ ...p, streakCount: 0 })); void load() }, [load])
 
-  return { state: s, onMove, next: load, hint, showSolution, retry, restart }
+  return { state: s, onMove, next: load, hint, showSolution, retry, restart, view }
 }
