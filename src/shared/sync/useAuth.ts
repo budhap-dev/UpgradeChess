@@ -26,7 +26,35 @@ export function bootAuth() {
     st.set({ syncStatus: 'syncing' })
     try { await syncNow(uid); st.set({ syncStatus: 'synced', lastSyncAt: Date.now(), syncError: undefined }) } catch (e) { st.set({ syncStatus: 'error', syncError: (e as Error).message }) }
   }
-  sb.auth.getSession().then(({ data }) => { st.set({ session: data.session, loading: false }); if (data.session) void runSync(data.session.user.id) })
+  sb.auth.getSession().then(async ({ data }) => {
+    let session = data.session
+    // Fallback + visible errors: if the callback params are still in the URL but no session materialised, exchange manually.
+    if (!session) {
+      const url = new URL(window.location.href)
+      const code = url.searchParams.get('code')
+      const authError = url.searchParams.get('error_description') ?? (window.location.hash.match(/error_description=([^&]+)/)?.[1])
+      if (authError) st.set({ syncStatus: 'error', syncError: 'Sign-in failed: ' + decodeURIComponent(authError.replace(/\+/g, ' ')) })
+      else if (code) {
+        const r = await sb.auth.exchangeCodeForSession(code)
+        if (r.error) st.set({ syncStatus: 'error', syncError: 'Sign-in failed: ' + r.error.message })
+        else session = r.data.session
+      } else if (window.location.hash.includes('access_token')) {
+        const h = new URLSearchParams(window.location.hash.slice(1))
+        const access_token = h.get('access_token'), refresh_token = h.get('refresh_token')
+        if (access_token && refresh_token) {
+          const r = await sb.auth.setSession({ access_token, refresh_token })
+          if (r.error) st.set({ syncStatus: 'error', syncError: 'Sign-in failed: ' + r.error.message })
+          else session = r.data.session
+        }
+      }
+    }
+    // tidy the address bar
+    if (window.location.hash.includes('access_token') || new URL(window.location.href).searchParams.has('code')) {
+      window.history.replaceState(null, '', window.location.pathname)
+    }
+    st.set({ session, loading: false })
+    if (session) void runSync(session.user.id)
+  })
   sb.auth.onAuthStateChange((_ev, session) => {
     st.set({ session, loading: false })
     if (session) void runSync(session.user.id); else syncedForUser = null
