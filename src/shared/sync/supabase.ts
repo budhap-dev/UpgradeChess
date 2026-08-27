@@ -8,6 +8,6 @@ export const syncConfigured = !!(url && anon)
 let client: SupabaseClient | null = null
 export function supabase(): SupabaseClient | null {
   if (!syncConfigured) return null
-  client ??= createClient(url!, anon!, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, flowType: 'pkce' } })
+  client ??= createClient(url!, anon!, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, flowType: 'implicit' } })
   return client
 }
