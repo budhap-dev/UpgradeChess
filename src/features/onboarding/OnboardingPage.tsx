@@ -83,8 +83,14 @@ export default function OnboardingPage() {
           <div className="card">
             <div className="eyebrow">Step 2 · Calibration</div>
             <div className="row" style={{ justifyContent: 'space-between' }}>
-              <h2>Solve {CALIBRATION_PUZZLES} puzzles</h2>
-              <span className="pill accent mono">{Math.min(done, CALIBRATION_PUZZLES)}/{CALIBRATION_PUZZLES} · rating {Math.round(tactics.rating)} ± {Math.round(tactics.rd)}</span>
+              <span className="row" style={{ gap: 8, flexWrap: 'nowrap' }}>
+                <button className="btn sm ghost" onClick={back} aria-label="Back" title="Back">←</button>
+                <h2>Solve {CALIBRATION_PUZZLES} puzzles</h2>
+              </span>
+              <span className="row" style={{ gap: 6 }}>
+                <span className="pill accent mono">{Math.min(done, CALIBRATION_PUZZLES)}/{CALIBRATION_PUZZLES} · rating {Math.round(tactics.rating)} ± {Math.round(tactics.rd)}</span>
+                {done < CALIBRATION_PUZZLES && <button className="btn sm ghost" onClick={next}>Skip →</button>}
+              </span>
             </div>
             <p className="muted" style={{ marginTop: 4 }}>Take your time and calculate — these are rated, so each result moves your tactics rating a lot while it's still uncertain.</p>
             <div className="progress" style={{ marginTop: 8 }}><span style={{ width: `${(Math.min(done, CALIBRATION_PUZZLES) / CALIBRATION_PUZZLES) * 100}%` }} /></div>
@@ -98,7 +104,6 @@ export default function OnboardingPage() {
               <div className="row"><button className="btn primary" onClick={next}>Continue →</button></div>
             </div>
           )}
-          {done < CALIBRATION_PUZZLES && <div className="row"><button className="btn ghost" onClick={back}>← Back</button><button className="btn ghost" onClick={next}>Skip calibration</button></div>}
         </div>
       )}
 

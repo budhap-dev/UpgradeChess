@@ -29,7 +29,10 @@ export interface SessionState {
   viewIdx: number | null  // non-null = reviewing a past position (board locked)
 }
 
-export interface SessionOptions { queue?: Puzzle[]; onResult?: (solved: boolean, puzzle: Puzzle) => void }
+export interface SessionOptions { queue?: Puzzle[]; onResult?: (solved: boolean, puzzle: Puzzle) => void; persist?: boolean }
+
+/** Sessions survive navigation: leaving the page keeps the current puzzle; a fresh one loads only via next(). */
+const savedSessions = new Map<string, SessionState>()
 
 export function usePuzzleSession(mode: Mode, theme: string | undefined, playerRating: number, options: SessionOptions = {}) {
   const chessRef = useRef(new Chess())
@@ -45,7 +48,27 @@ export function usePuzzleSession(mode: Mode, theme: string | undefined, playerRa
   const later = (fn: () => void, ms: number) => { timers.current.push(setTimeout(fn, ms)) }
   useEffect(() => () => timers.current.forEach(clearTimeout), [])
 
-  const load = useCallback(async () => {
+  const sessionKey = `${mode}|${theme ?? ''}`
+
+  const load = useCallback(async (fresh = false) => {
+    if (fresh) savedSessions.delete(sessionKey)
+    else if (optsRef.current.persist) {
+      const saved = savedSessions.get(sessionKey)
+      if (saved && saved.puzzle && ['solving', 'solved', 'failed'].includes(saved.status)) {
+        const chess = new Chess(saved.fen)
+        chessRef.current = chess
+        setS(saved)
+        // if we left while the opponent's reply was pending, play it now
+        if (saved.status === 'solving' && saved.puzzle.sideToMove !== chess.turn() && saved.step < saved.puzzle.solution.length) {
+          later(() => {
+            const reply = chess.move(uciToMove(saved.puzzle!.solution[saved.step]))
+            const rl = reply ? { from: reply.from, to: reply.to } : null
+            setS((p) => ({ ...p, fen: chess.fen(), lastMove: rl, step: p.step + 1, history: [...p.history, { fen: chess.fen(), lastMove: rl, san: reply?.san ?? '' }] }))
+          }, 400)
+        }
+        return
+      }
+    }
     setS((p) => ({ ...p, status: 'loading', ratingDelta: null, xpGained: null, hints: 0, hintSquare: null, wrongSquare: null, practice: false }))
     let target = ratingRef.current
     if (mode === 'streak') target = 800 + streakRef.current * 60
@@ -62,9 +85,15 @@ export function usePuzzleSession(mode: Mode, theme: string | undefined, playerRa
       const last = mv ? { from: mv.from, to: mv.to } : null
       setS((p) => ({ ...p, fen: chess.fen(), lastMove: last, status: 'solving', startedAt: Date.now(), history: [...p.history, { fen: chess.fen(), lastMove: last, san: mv?.san ?? '' }] }))
     }, 600)
-  }, [mode, theme])
+  }, [mode, theme, sessionKey])
 
   useEffect(() => { void load() }, [load])
+  // keep the session across navigation; next()/restart() clear it
+  useEffect(() => () => {
+    const st = stateRef.current
+    if (optsRef.current.persist && st.puzzle && ['solving', 'solved', 'failed'].includes(st.status)) savedSessions.set(sessionKey, { ...st, hintSquare: null, wrongSquare: null })
+    else savedSessions.delete(sessionKey)
+  }, [sessionKey])
 
   const finish = useCallback(async (solved: boolean, st: SessionState) => {
     const puzzle = st.puzzle!
@@ -169,7 +198,8 @@ export function usePuzzleSession(mode: Mode, theme: string | undefined, playerRa
     })
   }, [])
 
-  const restart = useCallback(() => { streakRef.current = 0; queueIdx.current = 0; stormCount.current = 0; setS((p) => ({ ...p, streakCount: 0 })); void load() }, [load])
+  const restart = useCallback(() => { savedSessions.delete(sessionKey); streakRef.current = 0; queueIdx.current = 0; stormCount.current = 0; setS((p) => ({ ...p, streakCount: 0 })); void load(true) }, [load, sessionKey])
 
-  return { state: s, onMove, next: load, hint, showSolution, retry, restart, view }
+  const next = useCallback(() => load(true), [load])
+  return { state: s, onMove, next, hint, showSolution, retry, restart, view }
 }
