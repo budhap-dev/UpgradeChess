@@ -41,7 +41,7 @@ export default function SettingsPage() {
       <div className="page-head"><div><div className="eyebrow">Profile</div><h1>Settings</h1></div></div>
       <AccountCard />
       <div className="card stack">
-        <label>Lichess username<input className="input" value={liVal} onChange={(e) => setLi(e.target.value)} placeholder="e.g. BudhaP" /></label>
+        <label>Lichess username<input className="input" value={liVal} onChange={(e) => setLi(e.target.value)} placeholder="username" /></label>
         <label>Chess.com username<input className="input" value={ccVal} onChange={(e) => setCc(e.target.value)} placeholder="optional" /></label>
         <label>Show estimated ratings as
           <select className="input" value={settings.ratingSystem} onChange={(e) => update({ ratingSystem: e.target.value as 'lichess' | 'chesscom' | 'fide' })}>

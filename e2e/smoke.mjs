@@ -16,7 +16,7 @@ const tap = async (from, to) => { await page.click(`[data-square="${from}"]`); a
 let failures = 0
 const check = (name, ok, extra = '') => { console.log(`${ok ? '✓' : '✗'} ${name} ${extra}`); if (!ok) failures++ }
 
-await page.goto(base + '/settings'); await page.fill('input[placeholder="e.g. BudhaP"]', 'BudhaP'); await page.click('text=Save'); await page.waitForTimeout(500)
+await page.goto(base + '/settings'); await page.fill('input[placeholder="username"]', 'BudhaP'); await page.click('text=Save'); await page.waitForTimeout(500)
 await page.goto(base + '/progress'); await page.waitForTimeout(3500)
 check('Lichess ratings render', /Rapid\s*\d{3,4}/i.test(await text()))
 
@@ -102,7 +102,7 @@ await mob.close()
 const fresh = await browser.newPage({ viewport: { width: 1200, height: 900 } })
 await fresh.goto(base + '/'); await fresh.waitForTimeout(800)
 check('Fresh profile is redirected to /welcome', fresh.url().endsWith('/welcome'))
-await fresh.click('text=Start →'); await fresh.fill('input[placeholder="e.g. BudhaP"]', 'BudhaP'); await fresh.click('text=Save & continue'); await fresh.waitForTimeout(400)
+await fresh.click('text=Start →'); await fresh.fill('input[placeholder="username"]', 'BudhaP'); await fresh.click('text=Save & continue'); await fresh.waitForTimeout(400)
 await fresh.click('text=Skip calibration'); await fresh.click('text=Continue →'); await fresh.waitForTimeout(300)
 check('Onboarding reaches the band summary', /You're in the \w+/.test((await fresh.textContent('main')).replace(/\s+/g, ' ')))
 await fresh.click('text=Go to my dashboard'); await fresh.waitForTimeout(800)

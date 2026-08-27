@@ -67,7 +67,7 @@ export default function OnboardingPage() {
           <div className="eyebrow">Step 1 · Accounts</div>
           <h2>Where do you play?</h2>
           <p className="muted">Public usernames only. We read ratings from the open APIs and snapshot them daily so you can watch the trend.</p>
-          <label>Lichess username<div className="row"><input className="input" value={li} onChange={(e) => setLi(e.target.value)} placeholder="e.g. BudhaP" /><button className="btn sm" onClick={() => setCheckLi(li.trim())} disabled={!li.trim()}>Check</button></div></label>
+          <label>Lichess username<div className="row"><input className="input" value={li} onChange={(e) => setLi(e.target.value)} placeholder="username" /><button className="btn sm" onClick={() => setCheckLi(li.trim())} disabled={!li.trim()}>Check</button></div></label>
           {checkLi && liQ.isLoading && <p className="muted">Looking up {checkLi}…</p>}
           {liQ.data?.notFound && <p style={{ color: 'var(--bad)' }}>No Lichess user "{checkLi}".</p>}
           {liQ.data && !liQ.data.notFound && <p className="row">{liQ.data.rows.slice(0, 4).map((r) => <span key={r.perf} className="pill mono" style={{ textTransform: 'capitalize' }}>{r.perf} {r.rating}</span>)}</p>}

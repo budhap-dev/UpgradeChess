@@ -37,7 +37,7 @@ export function Layout() {
   return (
     <div className="shell">
       <header className="topbar">
-        <NavLink to="/" className="brand"><span className="knight">♞</span>UpgradeChess</NavLink>
+        <NavLink to="/" className="brand"><span className="knight">♜</span>UpgradeChess</NavLink>
         {auth.configured && (
           <NavLink to="/settings" className="sync-dot" title={auth.user ? `Signed in as ${auth.user.email} · ${auth.syncStatus}` : 'Sign in to sync'} aria-label="Account">
             {auth.user ? <span className={`dot ${auth.syncStatus === 'error' ? 'bad' : auth.syncStatus === 'pending' || auth.syncStatus === 'syncing' ? 'warn' : 'good'}`} /> : <span className="muted" style={{ fontSize: 13 }}>Sign in</span>}
