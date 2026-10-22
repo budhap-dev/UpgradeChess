@@ -18,12 +18,15 @@ export interface BoardProps {
   /** Override the user's theme (used by the settings preview). */
   themeId?: string
   pieceSetId?: string
+  /** Override the user's coordinates setting (mini boards hide them). */
+  coordinates?: boolean
 }
 
-const LAST: CSSProperties = { background: 'color-mix(in srgb, var(--warn) 45%, transparent)' }
-const SEL: CSSProperties = { background: 'color-mix(in srgb, var(--accent) 55%, transparent)' }
-const DOT: CSSProperties = { background: 'radial-gradient(circle, color-mix(in srgb, var(--ink) 28%, transparent) 22%, transparent 24%)' }
-const CAP: CSSProperties = { background: 'radial-gradient(circle, transparent 60%, color-mix(in srgb, var(--ink) 28%, transparent) 62%)' }
+const isLight = (sq: string) => (sq.charCodeAt(0) - 97 + Number(sq[1])) % 2 === 0
+const LAST = { light: '#EFE3A0', dark: '#C8BE6E' }
+const SEL = { light: '#F4D86B', dark: '#D8B84A' }
+const DOT = 'radial-gradient(circle, rgba(20,32,25,.3) 0 17%, transparent 18%)'
+const CAP = 'radial-gradient(circle, transparent 0 62%, rgba(20,32,25,.3) 63% 74%, transparent 75%)'
 
 const pieceCache = new Map<string, Record<string, () => React.JSX.Element>>()
 function piecesFor(setId: string) {
@@ -38,7 +41,7 @@ function piecesFor(setId: string) {
 }
 
 /** Chessboard with drag + tap-to-move, legal-move dots, last-move highlight, themes and sounds. Auto-queens promotions. */
-export function Board({ fen, orientation = 'white', interactive = true, onMove, lastMove, highlights, animationMs = 200, id = 'board', themeId, pieceSetId }: BoardProps) {
+export function Board({ fen, orientation = 'white', interactive = true, onMove, lastMove, highlights, animationMs = 200, id = 'board', themeId, pieceSetId, coordinates }: BoardProps) {
   const [settings] = useSettings()
   const [selected, setSelected] = useState<string | null>(null)
   const chess = useMemo(() => { try { return new Chess(fen) } catch { return null } }, [fen])
@@ -62,13 +65,21 @@ export function Board({ fen, orientation = 'white', interactive = true, onMove, 
     return ok
   }
 
-  const squareStyles: Record<string, CSSProperties> = { ...(highlights ?? {}) }
-  if (lastMove) { squareStyles[lastMove.from] = { ...LAST, ...squareStyles[lastMove.from] }; squareStyles[lastMove.to] = { ...LAST, ...squareStyles[lastMove.to] } }
-  if (selected) squareStyles[selected] = SEL
-  for (const t of legalTargets) squareStyles[t.to] = { ...(squareStyles[t.to] ?? {}), ...(t.capture ? CAP : DOT) }
+  // tint (last move / selection) sits under any caller highlight; move dots layer on top of both
+  const tint: Record<string, string> = {}
+  if (lastMove) for (const sq of [lastMove.from, lastMove.to]) tint[sq] = isLight(sq) ? LAST.light : LAST.dark
+  if (selected) tint[selected] = isLight(selected) ? SEL.light : SEL.dark
+  const squareStyles: Record<string, CSSProperties> = {}
+  for (const [sq, bg] of Object.entries(tint)) squareStyles[sq] = { background: bg }
+  for (const [sq, st] of Object.entries(highlights ?? {})) squareStyles[sq] = { ...squareStyles[sq], ...st }
+  for (const t of legalTargets) {
+    const under = squareStyles[t.to]?.background ?? tint[t.to]
+    squareStyles[t.to] = { ...squareStyles[t.to], background: under ? `${t.capture ? CAP : DOT}, ${under}` : t.capture ? CAP : DOT }
+  }
 
   const turn = chess?.turn()
-  const notationColor = (bg: string) => ({ color: bg, fontSize: 'clamp(9px, 1.6vw, 12px)', fontFamily: 'var(--font-mono)', opacity: 0.9 })
+  const notationColor = (bg: string) => ({ color: bg })
+  const coordStyle: CSSProperties = { fontSize: 'clamp(9px, 1.5vw, 12px)', fontWeight: 700, fontFamily: 'var(--font-body)' }
 
   return (
     <Chessboard
@@ -79,14 +90,16 @@ export function Board({ fen, orientation = 'white', interactive = true, onMove, 
         boardOrientation: orientation,
         animationDurationInMs: settings.animations ? animationMs : 0,
         showAnimations: settings.animations,
-        showNotation: settings.showCoordinates,
+        showNotation: coordinates ?? settings.showCoordinates,
         allowDragging: interactive,
         squareStyles,
         darkSquareStyle: { backgroundColor: theme.dark },
         lightSquareStyle: { backgroundColor: theme.light },
         darkSquareNotationStyle: notationColor(theme.light),
         lightSquareNotationStyle: notationColor(theme.dark),
-        boardStyle: { borderRadius: 6, overflow: 'hidden', boxShadow: 'var(--shadow)', touchAction: 'none' },
+        alphaNotationStyle: { ...coordStyle, bottom: 1, right: 3 },
+        numericNotationStyle: { ...coordStyle, top: 1, left: 3 },
+        boardStyle: { borderRadius: 'var(--board-radius)', overflow: 'hidden', boxShadow: 'var(--board-shadow)', touchAction: 'none' },
         canDragPiece: ({ piece }) => interactive && !!turn && piece.pieceType[0] === turn,
         onPieceDrop: ({ sourceSquare, targetSquare }) => (targetSquare ? tryMove(sourceSquare, targetSquare) : false),
         onSquareClick: ({ square, piece }) => {

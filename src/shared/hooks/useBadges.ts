@@ -37,7 +37,7 @@ export function useBadges(): { badges: BadgeState[]; earnedCount: number; ready:
     if (!fresh.length) return
     void (async () => {
       for (const b of fresh) await db.badges.put({ badgeId: b.def.id, earnedAt: Date.now() })
-      fresh.slice(0, 3).forEach((b, i) => setTimeout(() => show(`Badge earned: ${b.def.icon} ${b.def.title}`), 300 + i * 1800))
+      fresh.slice(0, 3).forEach((b, i) => setTimeout(() => show(`Badge earned: ${b.def.title}`), 300 + i * 1800))
     })()
   }, [badges, stored, ready, show])
 

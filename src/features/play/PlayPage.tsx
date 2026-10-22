@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { Chess } from 'chess.js'
 import { Board } from '@/shared/ui/Board'
 import { getEngine, type EvalInfo } from '@/shared/engine/engine'
@@ -10,6 +10,8 @@ import { XP } from '@/config/scoring'
 import { useToast } from '@/shared/ui/toastStore'
 import { ENDGAMES } from '@/features/path/endgames'
 import { useSettings } from '@/shared/hooks/useSettings'
+import { Icon } from '@/shared/ui/Icon'
+import { PageHead } from '@/shared/ui/PageHead'
 
 /**
  * Graded levels = Stockfish "Skill Level" + move time. Stockfish skill levels are not calibrated to any human
@@ -114,43 +116,49 @@ export default function PlayPage() {
 
   const evalText = evalInfo ? (evalInfo.mate != null ? `M${Math.abs(evalInfo.mate)}` : `${(((chessRef.current.turn() === 'w' ? 1 : -1) * (evalInfo.cp ?? 0)) / 100).toFixed(1)}`) : '—'
 
+  const toMove = chessRef.current.turn() === color[0]
   return (
     <div className="stack">
-      <div className="page-head">
-        <div><div className="eyebrow">{endgame ? 'Endgame trainer' : 'Play'}</div><h1>{endgame ? endgame.title : 'Play vs engine'}</h1></div>
-        {thinking && <span className="pill">Engine thinking…</span>}
-      </div>
-      {endgame && <p className="muted">{endgame.goal === 'win' ? 'Win this position.' : 'Hold the draw.'} {endgame.hint}</p>}
+      <PageHead
+        eyebrow={endgame ? <span className="crumbs"><Link to="/path">Path</Link><span aria-hidden="true">/</span><span>Endgame trainer</span></span> : 'Play'}
+        title={endgame ? endgame.title : 'Play vs engine'}
+        sub={endgame ? `${endgame.goal === 'win' ? 'Win this position.' : 'Hold the draw.'} ${endgame.hint}` : undefined}
+        actions={thinking && <span className="pill"><span className="spinner" aria-hidden="true" />Engine thinking…</span>}
+      />
       <div className="two-col">
-        <div className="board-wrap"><Board fen={fen} orientation={color} interactive={!thinking && !result} onMove={onMove} lastMove={lastMove} id="play" /></div>
-        <div className="stack">
+        <div className="board-col">
+          <div className="player-strip"><span className={`side-swatch ${color === 'white' ? 'b' : 'w'}`} aria-hidden="true" /><strong>Stockfish</strong><span className="muted">· {lvl.label}</span></div>
+          <div className="board-wrap"><Board fen={fen} orientation={color} interactive={!thinking && !result} onMove={onMove} lastMove={lastMove} id="play" /></div>
+          <div className="player-strip"><span className={`side-swatch ${color[0]}`} aria-hidden="true" /><strong>You</strong><span className="muted">· {color === 'white' ? 'White' : 'Black'}</span></div>
+        </div>
+        <div className="panel">
           <div className="card stack">
-            {result ? <h3>{result}</h3> : <h3>{chessRef.current.turn() === color[0] ? 'Your move' : 'Engine to move'}</h3>}
-            {engineErr && <p style={{ color: 'var(--bad)' }}>Engine failed to load: {engineErr}</p>}
-            <label>Level
+            {result ? <h2>{result}</h2> : <h2>{toMove ? 'Your move' : 'Engine to move'}</h2>}
+            {engineErr && <div className="callout bad"><Icon name="x" size={18} /><span>Engine failed to load: {engineErr}</span></div>}
+            <label className="field">Level
               <select className="input" value={level} onChange={(e) => setLevel(Number(e.target.value))}>{LEVELS.map((l) => <option key={l.id} value={l.id}>{l.label} · {l.id === 7 ? '3000+' : fmt(l.est[settings.ratingSystem])}</option>)}</select>
             </label>
-            <div className="row" style={{ justifyContent: 'space-between', fontSize: 13 }}>
-              <span className="muted">Ratings shown as</span>
-              <span className="row" style={{ gap: 4 }}>
-                {(['lichess', 'chesscom', 'fide'] as const).map((sys) => <button key={sys} className={`btn sm ${settings.ratingSystem === sys ? 'primary' : 'ghost'}`} onClick={() => updateSettings({ ratingSystem: sys })}>{SYSTEM_LABEL[sys]}</button>)}
-              </span>
+            <div className="stack tight">
+              <span className="field" style={{ gap: 0 }}>Ratings shown as</span>
+              <div className="segmented" role="radiogroup" aria-label="Rating system">
+                {(['lichess', 'chesscom', 'fide'] as const).map((sys) => <button key={sys} type="button" role="radio" aria-checked={settings.ratingSystem === sys} aria-selected={settings.ratingSystem === sys} onClick={() => updateSettings({ ratingSystem: sys })}>{SYSTEM_LABEL[sys]}</button>)}
+              </div>
+              <p className="muted" style={{ fontSize: 13 }}>Estimates: engine skill levels aren't calibrated to human ratings, and strength varies with the time control.</p>
             </div>
-            <p className="muted" style={{ fontSize: 12 }}>Estimates — engine skill levels aren't calibrated to human ratings, and strength varies with the time control.</p>
-            {!endgame && <label>Play as
+            {!endgame && <label className="field">Play as
               <select className="input" value={color} onChange={(e) => { const s = e.target.value as 'white' | 'black'; setColor(s); reset(s) }}><option value="white">White</option><option value="black">Black</option></select>
             </label>}
             <div className="row">
-              <button className="btn primary" onClick={() => reset()}>New game</button>
-              <button className="btn" onClick={undo} disabled={sanList.length === 0}>Undo</button>
-              <button className="btn ghost" onClick={() => setShowEval((v) => !v)}>{showEval ? 'Hide eval' : 'Show eval'}</button>
+              <button className="btn primary" onClick={() => reset()}><Icon name="plus" size={18} />New game</button>
+              <button className="btn" onClick={undo} disabled={sanList.length === 0}><Icon name="retry" size={18} />Undo</button>
+              <button className="btn ghost" onClick={() => setShowEval((v) => !v)} aria-pressed={showEval}><Icon name="eye" size={18} />{showEval ? 'Hide eval' : 'Show eval'}</button>
             </div>
             {showEval && <p className="mono muted">Eval {evalText} · depth {evalInfo?.depth ?? 0}</p>}
           </div>
-          <div className="card flat">
-            <div className="eyebrow">Moves</div>
-            <p className="mono" style={{ fontSize: 14, lineHeight: 1.7, marginTop: 6 }}>
-              {sanList.length === 0 ? <span className="muted">—</span> : sanList.map((m, i) => <span key={i}>{i % 2 === 0 && <span className="muted">{i / 2 + 1}. </span>}{m} </span>)}
+          <div className="card">
+            <div className="card-head" style={{ marginBottom: 6 }}><h3>Moves</h3><span className="mono muted">{Math.ceil(sanList.length / 2)}</span></div>
+            <p className="moves">
+              {sanList.length === 0 ? <span className="muted">No moves yet</span> : sanList.map((m, i) => <span key={i}>{i % 2 === 0 && <span className="n">{i / 2 + 1}. </span>}{m} </span>)}
             </p>
           </div>
         </div>

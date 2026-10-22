@@ -1,34 +1,35 @@
 import { MOTIFS } from './themes'
+import type { IconName } from '@/shared/ui/Icon'
 
-export interface BadgeDef { id: string; title: string; desc: string; icon: string; group: 'tactics' | 'motif' | 'consistency' | 'path' | 'review' | 'openings' | 'level' }
+export interface BadgeDef { id: string; title: string; desc: string; icon: IconName; group: 'tactics' | 'motif' | 'consistency' | 'path' | 'review' | 'openings' | 'level' }
 export interface BadgeInput {
   attempts: { solved: boolean; themes: string[]; hints: number }[]
   streak: number; level: number; gamesReviewed: number; mastered: Set<string>; srsStrong: number; stormBest: number; woodpeckerCycles: number; tacticsRating: number
 }
 export interface BadgeState { def: BadgeDef; progress: number; target: number; earned: boolean }
 
-const motifBadges: BadgeDef[] = MOTIFS.map((m) => ({ id: `motif:${m.key}`, title: `${m.label} master`, desc: `Solve 100 ${m.label.toLowerCase()} puzzles at 80 %+`, icon: '♞', group: 'motif' }))
+const motifBadges: BadgeDef[] = MOTIFS.map((m) => ({ id: `motif:${m.key}`, title: `${m.label} master`, desc: `Solve 100 ${m.label.toLowerCase()} puzzles at 80 %+`, icon: 'target', group: 'motif' }))
 
 export const BADGES: BadgeDef[] = [
-  { id: 'first-blood', title: 'First blood', desc: 'Solve your first rated puzzle', icon: '✓', group: 'tactics' },
-  { id: 'century', title: 'Century', desc: 'Solve 100 puzzles', icon: '💯', group: 'tactics' },
-  { id: 'thousand', title: 'Thousand', desc: 'Solve 1,000 puzzles', icon: '🏆', group: 'tactics' },
-  { id: 'sharp', title: 'Sharp', desc: 'Reach a 1800 tactics rating', icon: '⚔', group: 'tactics' },
-  { id: 'storm-20', title: 'Storm chaser', desc: 'Score 20 in Puzzle Storm', icon: '⚡', group: 'tactics' },
-  { id: 'storm-40', title: 'Lightning', desc: 'Score 40 in Puzzle Storm', icon: '🌩', group: 'tactics' },
-  { id: 'woodpecker-3', title: 'Woodpecker', desc: 'Complete 3 Woodpecker cycles', icon: '🪵', group: 'tactics' },
+  { id: 'first-blood', title: 'First blood', desc: 'Solve your first rated puzzle', icon: 'check', group: 'tactics' },
+  { id: 'century', title: 'Century', desc: 'Solve 100 puzzles', icon: 'target', group: 'tactics' },
+  { id: 'thousand', title: 'Thousand', desc: 'Solve 1,000 puzzles', icon: 'award', group: 'tactics' },
+  { id: 'sharp', title: 'Sharp', desc: 'Reach a 1800 tactics rating', icon: 'zap', group: 'tactics' },
+  { id: 'storm-20', title: 'Storm chaser', desc: 'Score 20 in Puzzle Storm', icon: 'zap', group: 'tactics' },
+  { id: 'storm-40', title: 'Lightning', desc: 'Score 40 in Puzzle Storm', icon: 'zap', group: 'tactics' },
+  { id: 'woodpecker-3', title: 'Woodpecker', desc: 'Complete 3 Woodpecker cycles', icon: 'retry', group: 'tactics' },
   ...motifBadges,
-  { id: 'streak-7', title: 'One week', desc: '7-day streak', icon: '🔥', group: 'consistency' },
-  { id: 'streak-30', title: 'One month', desc: '30-day streak', icon: '🔥', group: 'consistency' },
-  { id: 'streak-100', title: 'Iron will', desc: '100-day streak', icon: '🔥', group: 'consistency' },
-  { id: 'endgame-basics', title: 'Endgame basics', desc: 'Master K+Q, K+R and K+P conversions', icon: '♖', group: 'path' },
-  { id: 'rook-endings', title: 'Rook technician', desc: 'Win the Lucena and hold the Philidor', icon: '♜', group: 'path' },
-  { id: 'foundation', title: 'Foundation complete', desc: 'Master every Foundation tactics lesson and drill', icon: '◬', group: 'path' },
-  { id: 'review-1', title: 'Honest look', desc: 'Review your first game', icon: '✎', group: 'review' },
-  { id: 'review-20', title: 'Iron review', desc: 'Review 20 games', icon: '✎', group: 'review' },
-  { id: 'repertoire-50', title: 'Booked up', desc: '50 repertoire positions with 2+ clean recalls', icon: '♙', group: 'openings' },
-  { id: 'level-5', title: 'Bishop', desc: 'Reach level 5', icon: '♗', group: 'level' },
-  { id: 'level-10', title: 'Queen', desc: 'Reach level 10', icon: '♕', group: 'level' },
+  { id: 'streak-7', title: 'One week', desc: '7-day streak', icon: 'flame', group: 'consistency' },
+  { id: 'streak-30', title: 'One month', desc: '30-day streak', icon: 'flame', group: 'consistency' },
+  { id: 'streak-100', title: 'Iron will', desc: '100-day streak', icon: 'flame', group: 'consistency' },
+  { id: 'endgame-basics', title: 'Endgame basics', desc: 'Master K+Q, K+R and K+P conversions', icon: 'rook', group: 'path' },
+  { id: 'rook-endings', title: 'Rook technician', desc: 'Win the Lucena and hold the Philidor', icon: 'rook', group: 'path' },
+  { id: 'foundation', title: 'Foundation complete', desc: 'Master every Foundation tactics lesson and drill', icon: 'path', group: 'path' },
+  { id: 'review-1', title: 'Honest look', desc: 'Review your first game', icon: 'search', group: 'review' },
+  { id: 'review-20', title: 'Iron review', desc: 'Review 20 games', icon: 'search', group: 'review' },
+  { id: 'repertoire-50', title: 'Booked up', desc: '50 repertoire positions with 2+ clean recalls', icon: 'book', group: 'openings' },
+  { id: 'level-5', title: 'Bishop', desc: 'Reach level 5', icon: 'award', group: 'level' },
+  { id: 'level-10', title: 'Queen', desc: 'Reach level 10', icon: 'crown', group: 'level' },
 ]
 
 /** Pure evaluation of every badge from the player's data. */

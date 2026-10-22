@@ -2,14 +2,17 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { Chess } from 'chess.js'
 import { Board } from '@/shared/ui/Board'
-import { CURRICULUM } from './curriculum'
+import { HINT_RING } from '@/shared/ui/boardStyles'
+import { CURRICULUM, TRACK_LABEL } from './curriculum'
 import { db } from '@/shared/db/db'
 import { addXp } from '@/shared/db/xp'
 import { useToast } from '@/shared/ui/toastStore'
 import { isCorrectMove, uciToMove } from '@/shared/chess/puzzle'
 import { routeFor } from './progression'
+import { Icon } from '@/shared/ui/Icon'
+import { PageHead } from '@/shared/ui/PageHead'
 
-const HL: CSSProperties = { boxShadow: 'inset 0 0 0 4px var(--info)' }
+const HL = HINT_RING
 const OK: CSSProperties = { background: 'color-mix(in srgb, var(--good) 45%, transparent)' }
 const BAD: CSSProperties = { background: 'color-mix(in srgb, var(--bad) 50%, transparent)' }
 
@@ -48,7 +51,7 @@ export default function LessonPage() {
     return h
   }, [mark, step])
 
-  if (!node || !steps.length) return <p>Lesson not found. <Link to="/path">Back to path</Link></p>
+  if (!node || !steps.length) return <div className="card empty-state"><p>Lesson not found. <Link to="/path">Back to path</Link></p></div>
 
   // orient to the side that solves the task, fixed for the whole step (never flips mid-line)
   const orientation = step.task ? (new Chess(step.task.fen).turn() === 'b' ? 'black' : 'white') : 'white'
@@ -96,28 +99,29 @@ export default function LessonPage() {
 
   return (
     <div className="stack">
-      <div className="page-head">
-        <div><div className="eyebrow"><Link to="/path">Path</Link> · {node.track} · step {i + 1}/{steps.length}</div><h1>{node.title}</h1></div>
-      </div>
-      <div className="progress"><span style={{ width: `${Math.round(((i + 1) / steps.length) * 100)}%` }} /></div>
+      <PageHead
+        eyebrow={<span className="crumbs"><Link to="/path">Path</Link><span aria-hidden="true">/</span><span>{TRACK_LABEL[node.track]}</span><span aria-hidden="true">·</span><span>Step {i + 1} of {steps.length}</span></span>}
+        title={node.title}
+      />
+      <div className="steps" aria-hidden="true">{steps.map((_, k) => <span key={k} className={k <= i ? 'on' : ''} />)}</div>
       <div className="two-col">
-        <div className="board-wrap"><Board fen={fen} orientation={orientation} interactive={!!step.task && taskState !== 'done'} onMove={onMove} lastMove={lastMove} highlights={highlights} id="lesson" animationMs={150} /></div>
-        <div className="stack">
-          <div className="card">
-            <p style={{ fontSize: 17, lineHeight: 1.6 }}>{rich(step.text)}</p>
+        <div className="board-wrap" data-task-state={step.task ? taskState : 'none'}><Board fen={fen} orientation={orientation} interactive={!!step.task && taskState !== 'done'} onMove={onMove} lastMove={lastMove} highlights={highlights} id="lesson" animationMs={150} /></div>
+        <div className="panel">
+          <div className="card stack">
+            <p className="prose" style={{ fontSize: 17 }}>{rich(step.text)}</p>
             {step.task && (
-              <div style={{ marginTop: 12 }}>
+              <div className="stack tight">
                 <p><strong>Your move:</strong> {step.task.prompt}</p>
-                {taskState === 'wrong' && <p style={{ color: 'var(--bad)', marginTop: 6 }}>Not that one — look again. {ply > 0 && 'Continue the line.'}</p>}
-                {taskState === 'done' && <p style={{ color: 'var(--good)', marginTop: 6 }}>✓ {step.task.explain}</p>}
-                {taskState !== 'done' && <button className="btn sm ghost" style={{ marginTop: 8 }} onClick={() => { const c = chessRef.current; for (let k = ply; k < step.task!.solution.length; k++) { const r = c.move(uciToMove(step.task!.solution[k])); if (r) setLastMove({ from: r.from, to: r.to }) } setFen(c.fen()); setTaskState('done'); setPassed((p) => p.map((v, k) => (k === i ? true : v))) }}>Show me</button>}
+                {taskState === 'wrong' && <div className="callout bad"><Icon name="x" size={18} /><span>Not that one. Look again.{ply > 0 && ' Continue the line.'}</span></div>}
+                {taskState === 'done' && <div className="callout good"><Icon name="check" size={18} strokeWidth={2.4} /><span>{step.task.explain}</span></div>}
+                {taskState !== 'done' && <button className="btn ghost sm" style={{ alignSelf: 'flex-start' }} onClick={() => { const c = chessRef.current; for (let k = ply; k < step.task!.solution.length; k++) { const r = c.move(uciToMove(step.task!.solution[k])); if (r) setLastMove({ from: r.from, to: r.to }) } setFen(c.fen()); setTaskState('done'); setPassed((p) => p.map((v, k) => (k === i ? true : v))) }}><Icon name="eye" size={18} />Show me</button>}
               </div>
             )}
           </div>
           <div className="row">
-            <button className="btn" disabled={i === 0} onClick={() => setI((k) => k - 1)}>← Back</button>
-            {!isLast && <button className="btn primary" disabled={!!step.task && !passed[i]} onClick={() => setI((k) => k + 1)}>Next →</button>}
-            {isLast && <button className="btn primary" disabled={!allPassed} onClick={finish}>Complete lesson</button>}
+            <button className="btn" disabled={i === 0} onClick={() => setI((k) => k - 1)}><Icon name="arrow-left" size={18} />Back</button>
+            {!isLast && <button className="btn primary" disabled={!!step.task && !passed[i]} onClick={() => setI((k) => k + 1)}>Next <Icon name="arrow-right" size={18} /></button>}
+            {isLast && <button className="btn primary" disabled={!allPassed} onClick={finish}><Icon name="check" size={18} />Complete lesson</button>}
           </div>
         </div>
       </div>
