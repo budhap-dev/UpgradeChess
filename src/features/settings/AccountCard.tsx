@@ -6,13 +6,13 @@ export function AccountCard() {
     return (
       <div className="card stack">
         <h3>Account & sync</h3>
-        <p className="muted" style={{ fontSize: 14 }}>Cloud sync isn't configured for this deployment, so progress stays on this device (use Export/Import below to move it). To enable Google sign-in and cross-device sync, set <code>VITE_SUPABASE_URL</code> and <code>VITE_SUPABASE_ANON_KEY</code> — see <code>docs/DEPLOY.md</code>.</p>
+        <p className="muted" style={{ fontSize: 14 }}>Cloud sync isn't configured for this deployment, so progress stays on this device (use Export/Import below to move it). To enable Google sign-in and cross-device sync, set <code>VITE_NEON_AUTH_URL</code> and <code>VITE_NEON_DATA_API_URL</code> — see <code>docs/DEPLOY.md</code>.</p>
       </div>
     )
   }
   const u = a.user
-  const name = (u?.user_metadata?.full_name as string | undefined) ?? u?.email
-  const avatar = u?.user_metadata?.avatar_url as string | undefined
+  const name = (u?.user_metadata?.displayName as string | undefined) ?? u?.email
+  const avatar = u?.user_metadata?.profileImageUrl as string | undefined
   return (
     <div className="card stack">
       <h3>Account & sync</h3>

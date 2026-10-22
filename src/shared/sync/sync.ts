@@ -1,10 +1,10 @@
 /**
- * Cloud sync: the whole local database is stored as one JSON document per user (table `user_data`, RLS-protected).
+ * Cloud sync: the whole local database is stored as one JSON document per user (table `user_data` on Neon, RLS-protected).
  * Merge is a union by stable keys so two devices can both add progress; scalar tables are last-write-wins by timestamp.
  */
 import Dexie from 'dexie'
 import { db, type XpEvent, type PuzzleAttempt, type PlayerRating, type ExternalRating, type NodeProgress, type SrsCard, type Setting, type Badge, type StoredGame } from '@/shared/db/db'
-import { supabase } from './supabase'
+import { neon } from './neon'
 
 export interface Dump {
   v: 1; exportedAt: number
@@ -61,13 +61,13 @@ export async function applyDump(d: Dump) {
 }
 
 export async function fetchRemote(userId: string): Promise<Dump | null> {
-  const sb = supabase(); if (!sb) return null
+  const sb = neon(); if (!sb) return null
   const { data, error } = await sb.from('user_data').select('data').eq('user_id', userId).maybeSingle()
   if (error) throw new Error(error.message)
   return (data?.data as Dump | undefined) ?? null
 }
 export async function pushRemote(userId: string, d: Dump) {
-  const sb = supabase(); if (!sb) return
+  const sb = neon(); if (!sb) return
   const { error } = await sb.from('user_data').upsert({ user_id: userId, data: d, updated_at: new Date().toISOString() })
   if (error) throw new Error(error.message)
   await db.settings.put({ key: 'syncLastAt', value: Date.now() })

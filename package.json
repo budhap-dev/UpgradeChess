@@ -18,7 +18,7 @@
     "audit": "node scripts/audit-tasks.mjs"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.112.3",
+    "@neondatabase/neon-js": "0.8.0-beta",
     "@tanstack/react-query": "^5.102.1",
     "chess.js": "^1.4.0",
     "dexie": "^4.4.5",
