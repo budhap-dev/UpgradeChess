@@ -7,13 +7,14 @@ import { usePlayerRating } from '@/shared/hooks/usePlayerRating'
 import { addXp } from '@/shared/db/xp'
 import { useToast } from '@/shared/ui/toastStore'
 import type { Puzzle } from '@/shared/chess/puzzle'
+import { Icon } from '@/shared/ui/Icon'
 
 interface Cycle { startedAt: number; finishedAt?: number; solved: number; failed: number }
 interface WoodpeckerSet { ids: string[]; createdAt: number; cycles: Cycle[] }
 const SET_SIZE = 60, CYCLE_XP = 100
 
 /** Woodpecker method: solve the same set repeatedly; each cycle should be faster and more accurate. */
-export function WoodpeckerMode({ aside }: { aside: ReactNode }) {
+export function WoodpeckerMode({ aside }: { aside?: ReactNode }) {
   const rating = usePlayerRating('tactics')
   const set = useLiveQuery(() => getSetting<WoodpeckerSet | null>('woodpecker', null), [])
   const [queue, setQueue] = useState<Puzzle[] | null>(null)
@@ -58,35 +59,40 @@ export function WoodpeckerMode({ aside }: { aside: ReactNode }) {
   if (queue) {
     return (
       <div className="stack">
-        <div className="card flat row" style={{ justifyContent: 'space-between' }}>
-          <span className="pill accent mono">Cycle {(set?.cycles.length ?? 0) + 1} · {progress.i}/{queue.length}</span>
-          <span className="pill good mono">{progress.solved} ✓</span><span className="pill bad mono">{progress.failed} ✕</span>
-          <button className="btn sm ghost" onClick={() => setQueue(null)}>Pause</button>
+        <div className="card stack tight">
+          <div className="row between">
+            <span className="row" style={{ gap: 6 }}>
+              <span className="pill accent mono">Cycle {(set?.cycles.length ?? 0) + 1} · {progress.i}/{queue.length}</span>
+              <span className="pill good mono" aria-label={`${progress.solved} solved`}><Icon name="check" size={14} strokeWidth={2.4} />{progress.solved}</span>
+              <span className="pill bad mono" aria-label={`${progress.failed} missed`}><Icon name="x" size={14} strokeWidth={2.4} />{progress.failed}</span>
+            </span>
+            <button className="btn sm ghost" onClick={() => setQueue(null)}>Pause</button>
+          </div>
+          <div className="progress thin"><span style={{ width: `${(progress.i / queue.length) * 100}%` }} /></div>
         </div>
-        <div className="progress"><span style={{ width: `${(progress.i / queue.length) * 100}%` }} /></div>
         <PuzzleTrainer mode="woodpecker" options={{ queue, onResult }} autoAdvanceMs={700} aside={aside} />
       </div>
     )
   }
   return (
     <div className="stack">
-      <div className="card">
-        <h3>The Woodpecker method</h3>
-        <p className="muted" style={{ marginTop: 6 }}>Solve the same {SET_SIZE} puzzles in repeated cycles, each cycle faster and more accurate, until the patterns are automatic. Unrated; {CYCLE_XP} XP per completed cycle.</p>
-        {finished && <p style={{ marginTop: 8 }}>Cycle done: <strong>{finished.solved}/{finished.solved + finished.failed}</strong> in {fmt((finished.finishedAt ?? 0) - finished.startedAt)}.</p>}
-        <div className="row" style={{ marginTop: 10 }}>
+      <div className="card stack tight">
+        <h2>The Woodpecker method</h2>
+        <p className="muted">Solve the same {SET_SIZE} puzzles in repeated cycles, each cycle faster and more accurate, until the patterns are automatic. Unrated; {CYCLE_XP} XP per completed cycle.</p>
+        {finished && <p>Cycle done: <strong>{finished.solved}/{finished.solved + finished.failed}</strong> in {fmt((finished.finishedAt ?? 0) - finished.startedAt)}.</p>}
+        <div className="row" style={{ marginTop: 6 }}>
           {!set && <button className="btn primary" onClick={createSet}>Create my set (around {Math.round(rating.rating)})</button>}
           {set && <button className="btn primary" onClick={startCycle}>Start cycle {set.cycles.length + 1}</button>}
           {set && <button className="btn ghost" onClick={resetSet}>New set</button>}
         </div>
       </div>
       {set && set.cycles.length > 0 && (
-        <div className="card flat">
-          <div className="eyebrow">Cycle history</div>
-          <table className="table" style={{ marginTop: 6 }}>
+        <div className="card">
+          <div className="card-head"><h3>Cycle history</h3></div>
+          <div className="table-wrap"><table className="table">
             <thead><tr><th>Cycle</th><th className="num">Accuracy</th><th className="num">Time</th><th>Date</th></tr></thead>
             <tbody>{set.cycles.map((c, i) => <tr key={i}><td>{i + 1}</td><td className="num">{Math.round((c.solved / Math.max(1, c.solved + c.failed)) * 100)}%</td><td className="num mono">{fmt((c.finishedAt ?? 0) - c.startedAt)}</td><td className="muted">{new Date(c.startedAt).toLocaleDateString()}</td></tr>)}</tbody>
-          </table>
+          </table></div>
         </div>
       )}
       {aside}

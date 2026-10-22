@@ -4,11 +4,12 @@ import { db, getSetting, setSetting } from '@/shared/db/db'
 import { addXp } from '@/shared/db/xp'
 import { useToast } from '@/shared/ui/toastStore'
 import { useLiveQuery } from 'dexie-react-hooks'
+import { Icon } from '@/shared/ui/Icon'
 
 const DURATION = 180, MAX_ERRORS = 3, COMBO_BONUS = 5
 
 /** Puzzle Storm: 3 minutes, rising difficulty, 3 mistakes end the run, every 5-solve combo adds +5 s. */
-export function StormMode({ aside }: { aside: ReactNode }) {
+export function StormMode({ aside }: { aside?: ReactNode }) {
   const [running, setRunning] = useState(false)
   const [left, setLeft] = useState(DURATION)
   const [score, setScore] = useState(0)
@@ -48,13 +49,11 @@ export function StormMode({ aside }: { aside: ReactNode }) {
   }
 
   const header = (
-    <div className="card flat">
-      <div className="row" style={{ justifyContent: 'space-between' }}>
-        <span className="stat"><span className="v mono" style={{ color: left <= 15 ? 'var(--bad)' : undefined }}>{Math.floor(left / 60)}:{String(left % 60).padStart(2, '0')}</span><span className="l">time left</span></span>
-        <span className="stat"><span className="v mono">{score}</span><span className="l">solved · combo {combo}</span></span>
-        <span className="stat"><span className="v mono" style={{ color: 'var(--bad)' }}>{'✕'.repeat(errors)}{'·'.repeat(MAX_ERRORS - errors)}</span><span className="l">mistakes</span></span>
-        <span className="stat"><span className="v mono">{best}</span><span className="l">best</span></span>
-      </div>
+    <div className="card storm-stats">
+      <span className="stat"><span className="v mono" style={{ color: left <= 15 ? 'var(--bad)' : undefined }}>{Math.floor(left / 60)}:{String(left % 60).padStart(2, '0')}</span><span className="l">time left</span></span>
+      <span className="stat"><span className="v mono">{score}</span><span className="l">solved · combo {combo}</span></span>
+      <span className="stat"><span className="v strikes" aria-label={`${errors} of ${MAX_ERRORS} mistakes`}>{Array.from({ length: MAX_ERRORS }, (_, i) => <span key={i} className={`result-sq ${i < errors ? 'ko' : 'empty'}`}>{i < errors && <Icon name="x" size={16} strokeWidth={2.4} />}</span>)}</span><span className="l">mistakes</span></span>
+      <span className="stat"><span className="v mono">{best}</span><span className="l">best</span></span>
     </div>
   )
 
@@ -62,10 +61,10 @@ export function StormMode({ aside }: { aside: ReactNode }) {
     return (
       <div className="stack">
         {header}
-        <div className="card">
-          {done ? <h3>{done.score} solved{done.score >= done.best && done.score > 0 ? ' — new best!' : ''}</h3> : <h3>Puzzle Storm</h3>}
-          <p className="muted" style={{ marginTop: 6 }}>Three minutes. Puzzles start easy and get harder with every solve; three mistakes end the run; every 5-solve combo adds 5 seconds. No hints, no rating — pure pattern speed. 2 XP per solve.</p>
-          <button className="btn primary" style={{ marginTop: 10 }} onClick={start}>{done ? 'Run again' : 'Start storm'}</button>
+        <div className="card stack tight">
+          {done ? <h2>{done.score} solved{done.score >= done.best && done.score > 0 ? ' · new best!' : ''}</h2> : <h2>Puzzle Storm</h2>}
+          <p className="muted">Three minutes. Puzzles start easy and get harder with every solve; three mistakes end the run; every 5-solve combo adds 5 seconds. No hints, no rating — pure pattern speed. 2 XP per solve.</p>
+          <button className="btn primary" style={{ alignSelf: 'flex-start', marginTop: 6 }} onClick={start}><Icon name="zap" size={18} />{done ? 'Run again' : 'Start storm'}</button>
         </div>
         {aside}
       </div>

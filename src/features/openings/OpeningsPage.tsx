@@ -4,6 +4,7 @@ import { Chess } from 'chess.js'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useQuery } from '@tanstack/react-query'
 import { Board } from '@/shared/ui/Board'
+import { HINT_RING } from '@/shared/ui/boardStyles'
 import { REPERTOIRES } from '@/features/path/repertoires'
 import { CURRICULUM } from '@/features/path/curriculum'
 import { buildTree, randomLine, type MoveNode } from './tree'
@@ -14,10 +15,12 @@ import { XP } from '@/config/scoring'
 import { useToast } from '@/shared/ui/toastStore'
 import { fetchExplorer } from '@/shared/api/lichess'
 import { uciToMove } from '@/shared/chess/puzzle'
+import { Icon } from '@/shared/ui/Icon'
+import { PageHead } from '@/shared/ui/PageHead'
 
 const OK: CSSProperties = { background: 'color-mix(in srgb, var(--good) 45%, transparent)' }
 const BAD: CSSProperties = { background: 'color-mix(in srgb, var(--bad) 50%, transparent)' }
-const HINT: CSSProperties = { boxShadow: 'inset 0 0 0 4px var(--info)' }
+const HINT = HINT_RING
 const key = (fen: string) => fen.split(' ').slice(0, 4).join(' ')
 
 export default function OpeningsPage() {
@@ -127,23 +130,28 @@ export default function OpeningsPage() {
   if (!rep || !tree) {
     return (
       <div className="stack">
-        <div className="page-head"><div><div className="eyebrow">Repertoire</div><h1>Openings</h1></div>{due > 0 && <span className="pill warn">{due} cards due</span>}</div>
-        <p className="muted">Ideas first, then the moves. Each repertoire is a small tree of lines; you drill it with spaced repetition and earn XP for every due card you recall.</p>
-        <Link to="/tricks" className="card" style={{ textDecoration: 'none', color: 'inherit' }}>
-          <div className="row" style={{ justifyContent: 'space-between' }}><h3>⚡ Gambits & quick tricks</h3><span className="btn sm">Open →</span></div>
-          <p className="muted" style={{ fontSize: 14, marginTop: 4 }}>Traps to set, traps to dodge, and gambits worth playing — step-through lines with a test on the key move.</p>
+        <PageHead eyebrow="Repertoire" title="Openings" sub="Ideas first, then the moves. Each repertoire is a small tree of lines; you drill it with spaced repetition and earn XP for every due card you recall." actions={due > 0 && <span className="pill warn mono">{due} card{due > 1 ? 's' : ''} due</span>} />
+        <Link to="/tricks" className="card node-card">
+          <span className="mark-lg"><Icon name="zap" size={22} /></span>
+          <span className="grow">
+            <h3>Gambits & quick tricks</h3>
+            <span className="muted" style={{ fontSize: 14 }}>Traps to set, traps to dodge, and gambits worth playing: step-through lines with a test on the key move.</span>
+          </span>
+          <Icon name="chevron-right" className="muted" />
         </Link>
         <div className="grid cols-2">
           {REPERTOIRES.map((r) => {
             const t = buildTree(r)
             const mine = allCards.filter((c) => c.repertoireId === r.id)
             const dueHere = mine.filter((c) => c.due <= Date.now()).length
+            const seenPct = Math.round((mine.length / Math.max(1, t.cards.length)) * 100)
             return (
-              <Link key={r.id} to={`/openings/${r.id}`} className="card" style={{ textDecoration: 'none', color: 'inherit' }}>
-                <div className="eyebrow">{r.side === 'w' ? 'White' : 'Black'} · {r.eco}</div>
-                <h3 style={{ marginTop: 4 }}>{r.name}</h3>
-                <p className="muted" style={{ fontSize: 14, marginTop: 4 }}>{r.blurb}</p>
-                <div className="row" style={{ marginTop: 8 }}><span className="pill mono">{mine.length}/{t.cards.length} positions seen</span>{dueHere > 0 && <span className="pill warn mono">{dueHere} due</span>}</div>
+              <Link key={r.id} to={`/openings/${r.id}`} className="card stack tight">
+                <div className="row between"><span className="eyebrow">{r.side === 'w' ? 'White' : 'Black'} · {r.eco}</span>{dueHere > 0 && <span className="pill warn mono">{dueHere} due</span>}</div>
+                <h3>{r.name}</h3>
+                <p className="muted" style={{ fontSize: 14 }}>{r.blurb}</p>
+                <div className="row between" style={{ marginTop: 'auto', paddingTop: 6 }}><span className="mono muted" style={{ fontSize: 13 }}>{mine.length}/{t.cards.length} positions seen</span></div>
+                <div className="progress thin"><span style={{ width: `${seenPct}%` }} /></div>
               </Link>
             )
           })}
@@ -154,42 +162,44 @@ export default function OpeningsPage() {
 
   const myTurn = chessRef.current.turn() === rep.side && !lineDone
   const sans = chessRef.current.history()
+  const repDue = cards.filter((c) => c.due <= Date.now()).length
   return (
     <div className="stack">
-      <div className="page-head">
-        <div><div className="eyebrow"><Link to="/openings">Openings</Link> · {rep.side === 'w' ? 'White' : 'Black'} · {rep.eco}</div><h1>{rep.name}</h1></div>
-        <span className="pill mono">{cards.length}/{tree.cards.length} positions · {cards.filter((c) => c.due <= Date.now()).length} due</span>
-      </div>
+      <PageHead
+        eyebrow={<span className="crumbs"><Link to="/openings">Openings</Link><span aria-hidden="true">/</span><span>{rep.side === 'w' ? 'White' : 'Black'} · {rep.eco}</span></span>}
+        title={rep.name}
+        actions={<span className="pill mono">{cards.length}/{tree.cards.length} positions · {repDue} due</span>}
+      />
       <div className="two-col">
         <div className="board-wrap"><Board fen={fen} orientation={rep.side === 'w' ? 'white' : 'black'} interactive={myTurn} onMove={onMove} lastMove={lastMove} highlights={mark} id="opening" animationMs={150} /></div>
-        <div className="stack">
-          <div className="card">
-            {lineDone ? <h3 style={{ color: 'var(--good)' }}>Line complete ✓</h3> : <h3>{myTurn ? 'Your move' : 'Opponent is moving…'}</h3>}
-            <p className="mono muted" style={{ fontSize: 14, marginTop: 6, lineHeight: 1.7 }}>{sans.length ? sans.map((m, i) => <span key={i}>{i % 2 === 0 && <span>{i / 2 + 1}. </span>}{m} </span>) : 'Start position'}</p>
-            {msg && <p style={{ color: 'var(--bad)', marginTop: 6 }}>{msg}</p>}
-            <div className="row" style={{ marginTop: 10 }}>
-              {!lineDone && <button className="btn" onClick={hint}>Hint</button>}
-              <button className="btn primary" onClick={startLine}>{lineDone ? 'Next line →' : 'Restart line'}</button>
-              <button className="btn ghost" onClick={() => setShowExplorer((v) => !v)}>{showExplorer ? 'Hide explorer' : 'What do others play?'}</button>
+        <div className="panel">
+          <div className="card stack tight">
+            {lineDone ? <div className="status-head"><Icon name="check" size={22} strokeWidth={2.4} className="good" /><h2 className="good">Line complete</h2></div> : <h2>{myTurn ? 'Your move' : 'Opponent is moving…'}</h2>}
+            <p className="moves">{sans.length ? sans.map((m, i) => <span key={i}>{i % 2 === 0 && <span className="n">{i / 2 + 1}. </span>}{m} </span>) : <span className="muted">Start position</span>}</p>
+            {msg && <div className="callout bad"><Icon name="x" size={18} /><span>{msg}</span></div>}
+            <div className="row" style={{ marginTop: 4 }}>
+              {!lineDone && <button className="btn secondary" onClick={hint}><Icon name="bulb" size={18} />Hint</button>}
+              <button className="btn primary" onClick={startLine}>{lineDone ? <>Next line <Icon name="arrow-right" size={18} /></> : <><Icon name="retry" size={18} />Restart line</>}</button>
+              <button className="btn ghost" onClick={() => setShowExplorer((v) => !v)} aria-expanded={showExplorer}>{showExplorer ? 'Hide explorer' : 'What do others play?'}</button>
             </div>
-            {linesDone > 0 && <p className="muted" style={{ fontSize: 13, marginTop: 8 }}>{linesDone} line{linesDone > 1 ? 's' : ''} this session.</p>}
+            {linesDone > 0 && <p className="muted" style={{ fontSize: 13 }}>{linesDone} line{linesDone > 1 ? 's' : ''} this session.</p>}
           </div>
           {showExplorer && (
-            <div className="card flat">
-              <div className="eyebrow">Lichess explorer · rapid/blitz 1600–2000</div>
+            <div className="card">
+              <div className="card-head"><h3>Lichess explorer</h3><span className="eyebrow">Rapid/blitz 1600–2000</span></div>
               {explorer.isLoading && <p className="muted">Loading…</p>}
               {explorer.error && <p className="muted">Explorer unavailable offline.</p>}
               {explorer.data && (
-                <table className="table" style={{ marginTop: 6 }}>
+                <div className="table-wrap"><table className="table">
                   <thead><tr><th>Move</th><th className="num">Games</th><th className="num">W / D / B</th></tr></thead>
                   <tbody>{explorer.data.moves.slice(0, 6).map((m) => { const n = m.white + m.draws + m.black; return <tr key={m.uci}><td className="mono">{m.san}</td><td className="num">{n.toLocaleString()}</td><td className="num mono">{Math.round((m.white / n) * 100)} / {Math.round((m.draws / n) * 100)} / {Math.round((m.black / n) * 100)}</td></tr> })}</tbody>
-                </table>
+                </table></div>
               )}
             </div>
           )}
-          <div className="card flat">
-            <div className="eyebrow">Key ideas</div>
-            <ul style={{ margin: '6px 0 0', paddingLeft: 18 }}>{rep.ideas.map((i) => <li key={i}>{i}</li>)}</ul>
+          <div className="card">
+            <div className="card-head" style={{ marginBottom: 8 }}><h3>Key ideas</h3></div>
+            <ul className="prose" style={{ margin: 0, paddingLeft: 18 }}>{rep.ideas.map((i) => <li key={i}>{i}</li>)}</ul>
           </div>
         </div>
       </div>

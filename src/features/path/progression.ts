@@ -1,6 +1,7 @@
 import type { NodeProgress, PuzzleAttempt } from '@/shared/db/db'
 import type { PathNode } from './types'
 import { MOTIF_LABEL } from '@/config/themes'
+import type { IconName } from '@/shared/ui/Icon'
 
 export type NodeState = 'locked' | 'available' | 'in-progress' | 'mastered'
 
@@ -39,23 +40,23 @@ export function routeFor(n: PathNode): string {
     case 'opening': return `/openings/${n.repertoireId}`
   }
 }
-export const ICON: Record<PathNode['kind'], string> = { lesson: '📖', 'themed-set': '♞', endgame: '♖', opening: '♙' }
+export const ICON: Record<PathNode['kind'], IconName> = { lesson: 'bulb', 'themed-set': 'target', endgame: 'rook', opening: 'book' }
 
-export interface Recommendation { id: string; title: string; route: string; reason: string; xp: number; icon: string }
+export interface Recommendation { id: string; title: string; route: string; reason: string; xp: number; icon: IconName }
 
 /** Ranked next steps: due SRS cards › weakest motif › first available path node per track. */
 export function nextRecommended(input: { progress: NodeProgress[]; attempts: PuzzleAttempt[]; dueCards: number; nodes: PathNode[]; reviewBacklog?: number }): Recommendation[] {
   const { progress, attempts, dueCards, nodes, reviewBacklog = 0 } = input
   const states = nodeStates(nodes, progress, attempts)
   const recs: Recommendation[] = []
-  if (dueCards > 0) recs.push({ id: 'srs', title: `Review ${dueCards} opening card${dueCards > 1 ? 's' : ''}`, route: '/openings', reason: 'Spaced repetition is due — 5 XP per card.', xp: Math.min(100, dueCards * 5), icon: '♙' })
+  if (dueCards > 0) recs.push({ id: 'srs', title: `Review ${dueCards} opening card${dueCards > 1 ? 's' : ''}`, route: '/openings', reason: 'Spaced repetition is due — 5 XP per card.', xp: Math.min(100, dueCards * 5), icon: 'book' })
   // weakest motif over last 100 attempts, min 6 tries
   const recent = attempts.slice(0, 100)
   const byTheme = new Map<string, { n: number; ok: number }>()
   for (const a of recent) for (const t of a.themes) { if (!MOTIF_LABEL[t]) continue; const s = byTheme.get(t) ?? { n: 0, ok: 0 }; s.n++; if (a.solved) s.ok++; byTheme.set(t, s) }
   const weak = [...byTheme.entries()].filter(([, s]) => s.n >= 6).map(([t, s]) => ({ t, pct: s.ok / s.n, n: s.n })).sort((a, b) => a.pct - b.pct)[0]
-  if (weak && weak.pct < 0.7) recs.push({ id: 'weak', title: `Themed puzzles: ${MOTIF_LABEL[weak.t]}`, route: `/puzzles/${weak.t}`, reason: `Your weakest motif lately (${Math.round(weak.pct * 100)}% over ${weak.n}).`, xp: 60, icon: '♞' })
-  if (reviewBacklog > 0) recs.push({ id: 'review', title: `Review ${reviewBacklog} game${reviewBacklog > 1 ? 's' : ''}`, route: '/review', reason: 'Analyse, guess the better moves, log the error type — 70 XP per game.', xp: 70, icon: '✎' })
+  if (weak && weak.pct < 0.7) recs.push({ id: 'weak', title: `Themed puzzles: ${MOTIF_LABEL[weak.t]}`, route: `/puzzles/${weak.t}`, reason: `Your weakest motif lately (${Math.round(weak.pct * 100)}% over ${weak.n}).`, xp: 60, icon: 'target' })
+  if (reviewBacklog > 0) recs.push({ id: 'review', title: `Review ${reviewBacklog} game${reviewBacklog > 1 ? 's' : ''}`, route: '/review', reason: 'Analyse, guess the better moves, log the error type — 70 XP per game.', xp: 70, icon: 'search' })
   const seenTrack = new Set<string>()
   for (const n of nodes) {
     const st = states[n.id].state

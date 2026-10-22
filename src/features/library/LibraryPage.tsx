@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom'
 import { MOTIFS } from '@/config/themes'
+import { Icon } from '@/shared/ui/Icon'
+import { PageHead } from '@/shared/ui/PageHead'
 
 const RESOURCES = [
   { name: 'Lichess Practice', url: 'https://lichess.org/practice', what: 'Free interactive endgame and tactics drills.' },
@@ -25,26 +27,29 @@ const BOOKS = [
 export default function LibraryPage() {
   return (
     <div className="stack">
-      <div className="page-head"><div><div className="eyebrow">Reference</div><h1>Library</h1></div></div>
-      <div className="card">
-        <h3>Tactical motifs</h3>
-        <p className="muted" style={{ fontSize: 14 }}>In learning order. Tap one to drill it.</p>
-        <ul className="list" style={{ marginTop: 10 }}>
-          {MOTIFS.map((m, i) => <Link key={m.key} to={`/puzzles/${m.key}`} className="node available"><span className="mark mono" style={{ fontSize: 13 }}>{String(i + 1).padStart(2, '0')}</span><span><strong>{m.label}</strong><br /><span className="muted" style={{ fontSize: 14 }}>{m.blurb}</span></span></Link>)}
-        </ul>
+      <PageHead eyebrow="Reference" title="Library" />
+      <div className="grid cols-2">
+        <Link to="/library/games" className="card node-card">
+          <span className="mark-lg"><Icon name="crown" size={22} /></span>
+          <span className="grow"><h3>Annotated master games</h3><span className="muted" style={{ fontSize: 14 }}>The Opera Game, the Immortal Game, Réti–Tartakower, the Game of the Century, Lasker–Bauer: notes at the key moments and guess-the-move checkpoints.</span></span>
+          <Icon name="chevron-right" className="muted" />
+        </Link>
+        <Link to="/tricks" className="card node-card">
+          <span className="mark-lg"><Icon name="zap" size={22} /></span>
+          <span className="grow"><h3>Gambits & quick tricks</h3><span className="muted" style={{ fontSize: 14 }}>Légal's mate, the Fried Liver, Stafford and Englund traps, Noah's Ark, the Siberian trap, Evans / Danish / Smith-Morra / King's gambits and more.</span></span>
+          <Icon name="chevron-right" className="muted" />
+        </Link>
       </div>
-      <Link to="/library/games" className="card" style={{ textDecoration: 'none', color: 'inherit' }}>
-        <h3>♚ Annotated master games</h3>
-        <p className="muted" style={{ fontSize: 14, marginTop: 4 }}>The Opera Game, the Immortal Game, Réti–Tartakower, the Game of the Century, Lasker–Bauer — with notes at the key moments and guess-the-move checkpoints.</p>
-      </Link>
-      <Link to="/tricks" className="card" style={{ textDecoration: 'none', color: 'inherit' }}>
-        <h3>⚡ Gambits & quick tricks</h3>
-        <p className="muted" style={{ fontSize: 14, marginTop: 4 }}>Légal's mate, the Fried Liver, the Stafford and Englund traps, the Elephant and Lasker traps, Noah's Ark, the Siberian trap, Evans / Danish / Smith-Morra / King's gambits and more — each with a step-through line and a test.</p>
-      </Link>
-      <div className="card">
-        <h3>Weekly template (6–8 h)</h3>
-        <div style={{ overflowX: 'auto' }}>
-          <table className="table" style={{ marginTop: 8 }}>
+      <section className="card" aria-labelledby="motifs-h">
+        <div className="card-head"><h2 id="motifs-h">Tactical motifs</h2><span className="muted" style={{ fontSize: 14 }}>In learning order. Tap one to drill it.</span></div>
+        <ul className="list motif-list">
+          {MOTIFS.map((m, i) => <li key={m.key}><Link to={`/puzzles/${m.key}`} className="node available"><span className="mark">{String(i + 1).padStart(2, '0')}</span><span className="body"><span className="title">{m.label}</span><span className="desc">{m.blurb}</span></span><Icon name="chevron-right" className="muted" /></Link></li>)}
+        </ul>
+      </section>
+      <section className="card" aria-labelledby="week-h">
+        <div className="card-head"><h2 id="week-h">Weekly template</h2><span className="pill mono">6–8 h</span></div>
+        <div className="table-wrap">
+          <table className="table">
             <thead><tr><th>Day</th><th>Device</th><th>Activity</th></tr></thead>
             <tbody>
               <tr><td>Mon</td><td>Mobile</td><td>20 min rated puzzles + 10 min Streak</td></tr>
@@ -57,17 +62,17 @@ export default function LibraryPage() {
             </tbody>
           </table>
         </div>
-        <p className="muted" style={{ fontSize: 14, marginTop: 8 }}>Bad day? 10 puzzles and one endgame position. Never zero.</p>
-      </div>
+        <p className="muted" style={{ fontSize: 14, marginTop: 10 }}>Bad day? 10 puzzles and one endgame position. Never zero.</p>
+      </section>
       <div className="grid cols-2">
-        <div className="card">
-          <h3>Platforms & videos</h3>
-          <ul style={{ margin: '8px 0 0', paddingLeft: 18 }}>{RESOURCES.map((r) => <li key={r.url} style={{ marginBottom: 6 }}><a href={r.url} target="_blank" rel="noreferrer">{r.name}</a> — <span className="muted">{r.what}</span></li>)}</ul>
-        </div>
-        <div className="card">
-          <h3>Books</h3>
-          <ul style={{ margin: '8px 0 0', paddingLeft: 18 }}>{BOOKS.map(([a, t, w]) => <li key={t} style={{ marginBottom: 6 }}><em>{t}</em> — {a}. <span className="muted">{w}</span></li>)}</ul>
-        </div>
+        <section className="card" aria-labelledby="res-h">
+          <div className="card-head"><h2 id="res-h">Platforms & videos</h2></div>
+          <ul className="prose" style={{ margin: 0, paddingLeft: 18 }}>{RESOURCES.map((r) => <li key={r.url}><a href={r.url} target="_blank" rel="noreferrer">{r.name}</a> <span className="muted">· {r.what}</span></li>)}</ul>
+        </section>
+        <section className="card" aria-labelledby="books-h">
+          <div className="card-head"><h2 id="books-h">Books</h2></div>
+          <ul className="prose" style={{ margin: 0, paddingLeft: 18 }}>{BOOKS.map(([a, t, w]) => <li key={t}><em>{t}</em>, {a}. <span className="muted">{w}</span></li>)}</ul>
+        </section>
       </div>
     </div>
   )

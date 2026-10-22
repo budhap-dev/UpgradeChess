@@ -1,0 +1,35 @@
+/* Board pages: board column + side panel. Used by lessons, openings, tricks, play, review and master games. */
+.board-wrap { width: min(100%, calc(100dvh - 300px), 640px); min-width: min(100%, 280px); aspect-ratio: 1; margin: 0 auto; }
+.board-col { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.two-col { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
+.two-col > .board-col, .two-col > .board-wrap { flex: 2 1 380px; max-width: 640px; }
+.two-col > .panel { flex: 1 1 320px; min-width: 0; display: flex; flex-direction: column; gap: var(--gap); }
+.player-strip { display: flex; align-items: center; gap: 10px; min-height: 32px; font-size: 14px; color: var(--ink-2); }
+.player-strip strong { color: var(--ink); font-weight: 600; }
+.side-swatch { width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid; flex: none; display: inline-block; }
+.side-swatch.w { background: #FFFFFF; border-color: #8E8878; }
+.side-swatch.b { background: #17201A; border-color: color-mix(in srgb, var(--ink) 45%, #17201A); }
+.board-tools { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.board-tools .tools { display: flex; gap: 8px; }
+.mini-board { --board-radius: 8px; --board-shadow: none; width: 168px; aspect-ratio: 1; flex: none; pointer-events: none; }
+.eval-bar { width: 14px; border-radius: 6px; overflow: hidden; background: #2a2a2a; border: 1px solid var(--line); display: flex; flex: none; }
+.eval-bar > div { transition: flex .3s; }
+.eval-bar > .w { background: #E8E4D6; }
+
+@media (min-width: 820px) {
+  .board-wrap { margin: 0; }
+  .two-col > .board-col .board-wrap, .two-col > .board-wrap { width: 100%; max-width: min(640px, calc(100dvh - 180px)); min-width: 0; }
+}
+@media (max-width: 819px) {
+  .two-col { gap: var(--gap); }
+  .two-col > .board-col, .two-col > .board-wrap, .two-col > .panel { flex-basis: 100%; max-width: none; }
+  .board-wrap { width: min(100%, calc(100dvh - 240px)); }
+}
+@media (orientation: landscape) and (max-height: 520px) {
+  .two-col { flex-wrap: nowrap; }
+  .two-col > .board-col, .two-col > .board-wrap { flex: 0 0 auto; width: min(52vw, calc(100dvh - 40px)); max-width: none; }
+  .two-col > .panel { flex: 1 1 0; }
+  .two-col > .board-col .board-wrap { width: 100%; max-width: none; min-width: 0; }
+  .two-col > .board-wrap { min-width: 0; }
+  .page-head .sub { display: none; }
+}

@@ -2,7 +2,8 @@
 
 A fast, offline-capable chess training app — React 19 + TypeScript + Vite, installable as a PWA on phone or desktop.
 
-**Plan & spec:** [docs/UpgradeChess-Plan.md](docs/UpgradeChess-Plan.md)
+**Plan & spec:** [docs/UpgradeChess-Plan.md](docs/UpgradeChess-Plan.md)  
+**UI upgrade (web + mobile):** [docs/UI-Upgrade-Prompt.md](docs/UI-Upgrade-Prompt.md) — agent prompt + step checklist
 
 ## What it does (v0.1)
 

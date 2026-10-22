@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Chess } from 'chess.js'
 import { type Puzzle, uciToMove, isCorrectMove } from '@/shared/chess/puzzle'
-import { nextPuzzle } from './puzzleSource'
+import { loadPack, nextPuzzle } from './puzzleSource'
 import { db, DAY_KEY } from '@/shared/db/db'
 import { updateGlicko, DEFAULT_GLICKO, PUZZLE_RD } from '@/shared/rating/glicko2'
 import { puzzleXp } from '@/config/scoring'
@@ -29,7 +29,8 @@ export interface SessionState {
   viewIdx: number | null  // non-null = reviewing a past position (board locked)
 }
 
-export interface SessionOptions { queue?: Puzzle[]; onResult?: (solved: boolean, puzzle: Puzzle) => void; persist?: boolean }
+/** startId: open this pack puzzle first (the daily puzzle); a repeat is played as unrated practice. */
+export interface SessionOptions { queue?: Puzzle[]; onResult?: (solved: boolean, puzzle: Puzzle) => void; persist?: boolean; startId?: string }
 
 /** Sessions survive navigation: leaving the page keeps the current puzzle; a fresh one loads only via next(). */
 const savedSessions = new Map<string, SessionState>()
@@ -52,7 +53,7 @@ export function usePuzzleSession(mode: Mode, theme: string | undefined, playerRa
 
   const load = useCallback(async (fresh = false) => {
     if (fresh) savedSessions.delete(sessionKey)
-    else if (optsRef.current.persist) {
+    else if (optsRef.current.persist && !optsRef.current.startId) {
       const saved = savedSessions.get(sessionKey)
       if (saved && saved.puzzle && ['solving', 'solved', 'failed'].includes(saved.status)) {
         const chess = new Chess(saved.fen)
@@ -73,13 +74,19 @@ export function usePuzzleSession(mode: Mode, theme: string | undefined, playerRa
     let target = ratingRef.current
     if (mode === 'streak') target = 800 + streakRef.current * 60
     if (mode === 'storm') target = 700 + stormCount.current * 45
-    let puzzle: Puzzle | null
-    if (mode === 'woodpecker') { const q = optsRef.current.queue ?? []; puzzle = q[queueIdx.current] ?? null; if (!puzzle) { setS((p) => ({ ...p, status: 'empty' })); return } }
-    else puzzle = await nextPuzzle({ theme: mode === 'themed' ? theme : undefined, targetRating: target, exclude: mode === 'storm' ? new Set() : undefined })
+    let puzzle: Puzzle | null = null
+    let practice = false
+    const startId = optsRef.current.startId
+    if (startId && !fresh) {
+      puzzle = (await loadPack()).find((p) => p.id === startId) ?? null
+      practice = !!puzzle && (await db.puzzleAttempts.where('puzzleId').equals(startId).count()) > 0
+    }
+    if (!puzzle && mode === 'woodpecker') { const q = optsRef.current.queue ?? []; puzzle = q[queueIdx.current] ?? null }
+    else if (!puzzle) puzzle = await nextPuzzle({ theme: mode === 'themed' ? theme : undefined, targetRating: target, exclude: mode === 'storm' ? new Set() : undefined })
     if (!puzzle) { setS((p) => ({ ...p, status: 'empty' })); return }
     const chess = new Chess(puzzle.fen)
     chessRef.current = chess
-    setS((p) => ({ ...p, puzzle, fen: chess.fen(), status: 'intro', step: 0, lastMove: null, startedAt: Date.now(), history: [{ fen: chess.fen(), lastMove: null, san: 'start' }], viewIdx: null }))
+    setS((p) => ({ ...p, puzzle, fen: chess.fen(), status: 'intro', step: 0, lastMove: null, startedAt: Date.now(), practice, history: [{ fen: chess.fen(), lastMove: null, san: 'start' }], viewIdx: null }))
     later(() => {
       const mv = chess.move(uciToMove(puzzle.opponentMove))
       const last = mv ? { from: mv.from, to: mv.to } : null
