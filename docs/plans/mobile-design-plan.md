@@ -9,8 +9,8 @@ Status: ☐ todo · ◐ in progress · ☑ done (awaiting your review) · ✔ ap
 
 | # | Change | Files | Status |
 |---|---|---|---|
-| 1 | First puzzle of a session uses your real rating, not the 1500 default [3] | `usePuzzleSession.ts` | ☑ |
-| 2 | Centre action button: Hint gets a quiet outlined style, and taps are ignored for 500ms after a result so a double-tap on Next can't use a hint [5] | `PuzzleTrainer.tsx`, `trainer.css` | ☐ |
+| 1 | First puzzle of a session uses your real rating, not the 1500 default [3] | `usePuzzleSession.ts` | ✔ PR #12 |
+| 2 | Centre action button: Hint gets a quiet outlined style, and taps are ignored for 500ms after a result so a double-tap on Next can't use a hint [5] | `PuzzleTrainer.tsx`, `trainer.css` | ☑ |
 | 3 | Failed state: remove the duplicate buttons in the status card; the action bar becomes Flip · Back · **Retry** · Solution · Next [7] | `PuzzleTrainer.tsx`, `trainer.css` | ☐ |
 | 4 | Phone landscape works on wide phones (844–932px) and adds notch-side safe-area padding [2] | `shell.css`, `trainer.css` | ☐ |
 | 5 | Dark mode: the Home "Today" card gets visible contrast [8] | `home.css` | ☐ |

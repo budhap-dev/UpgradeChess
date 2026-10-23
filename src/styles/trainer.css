@@ -26,6 +26,8 @@ kbd { font-family: var(--font-mono); font-size: 11px; padding: 1px 6px; border-r
 .action-bar button:disabled { opacity: .35; }
 .action-bar button.centre { justify-self: center; width: 52px; height: 52px; min-height: 0; border-radius: 14px; background: var(--accent); color: var(--accent-ink); gap: 0; font-size: 10.5px; }
 .action-bar button.centre:disabled { opacity: .45; }
+/* Hint is optional: outlined so it doesn't look like the filled Next/Retry in the same spot */
+.action-bar button.centre.quiet { background: var(--surface); color: var(--accent); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--accent) 55%, var(--line)); }
 .shell:not([data-focus]) .action-bar { display: none; }
 
 /* Puzzles page header */
