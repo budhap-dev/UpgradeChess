@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { Board } from '@/shared/ui/Board'
 import { HINT_RING } from '@/shared/ui/boardStyles'
@@ -15,6 +15,8 @@ import { sfx, haptic } from '@/shared/ui/sound'
 const HINT = HINT_RING
 const WRONG: CSSProperties = { background: 'color-mix(in srgb, var(--bad) 55%, transparent)' }
 const MAX_HINTS = 2
+// the centre action changes meaning (Next → Hint) in place; ignore taps right after a change
+const CENTRE_GUARD_MS = 500
 const SIDE = { w: 'White', b: 'Black' } as const
 
 export interface TrainerProps { mode: Mode; theme?: string; options?: SessionOptions; autoAdvanceMs?: number; locked?: boolean; aside?: ReactNode }
@@ -76,6 +78,9 @@ export function PuzzleTrainer({ mode, theme, options, autoAdvanceMs, locked, asi
     }
     window.addEventListener('keydown', onKey); return () => window.removeEventListener('keydown', onKey)
   }, [view, hint, next, canHint, finished, autoAdvanceMs])
+  const statusAt = useRef(0)
+  useEffect(() => { statusAt.current = Date.now() }, [state.status, p?.id])
+  const centre = (fn: () => void) => () => { if (Date.now() - statusAt.current >= CENTRE_GUARD_MS) fn() }
   useEffect(() => { if (state.status === 'solved') { sfx.success(); haptic(30) } else if (state.status === 'failed') { sfx.fail(); haptic([40, 60, 40]) } }, [state.status])
   useEffect(() => { if (finished && autoAdvanceMs && !locked) { const t = setTimeout(next, autoAdvanceMs); return () => clearTimeout(t) } }, [finished, autoAdvanceMs, locked, next, state.puzzle?.id])
   useEffect(() => {
@@ -222,10 +227,10 @@ export function PuzzleTrainer({ mode, theme, options, autoAdvanceMs, locked, asi
         <button onClick={() => setFlipped((v) => !v)} aria-label="Flip board"><Icon name="flip" size={22} /><span>Flip</span></button>
         <button onClick={() => view(-1)} disabled={!canStep || atStart} aria-label="Previous move"><Icon name="chevron-left" size={22} /><span>Back</span></button>
         {state.status === 'solved' || (state.status === 'failed' && (!isRated || autoAdvanceMs))
-          ? <button className="centre" onClick={() => void next()} disabled={!!autoAdvanceMs}><Icon name="arrow-right" size={22} /><span>Next</span></button>
+          ? <button className="centre" onClick={centre(() => void next())} disabled={!!autoAdvanceMs}><Icon name="arrow-right" size={22} /><span>Next</span></button>
           : state.status === 'failed'
-            ? <button className="centre" onClick={retry}><Icon name="retry" size={22} /><span>Retry</span></button>
-            : <button className="centre" onClick={hint} disabled={!canHint}><Icon name="bulb" size={22} /><span>Hint</span></button>}
+            ? <button className="centre" onClick={centre(retry)}><Icon name="retry" size={22} /><span>Retry</span></button>
+            : <button className="centre quiet" onClick={centre(hint)} disabled={!canHint} aria-label="Hint (makes this puzzle unrated)"><Icon name="bulb" size={22} /><span>Hint</span></button>}
         <button onClick={() => view(1)} disabled={!viewing} aria-label="Next move"><Icon name="chevron-right" size={22} /><span>Forward</span></button>
         {state.status === 'failed' && !autoAdvanceMs
           ? <button onClick={() => void next()}><Icon name="skip" size={22} /><span>Next</span></button>
