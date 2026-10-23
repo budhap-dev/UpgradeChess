@@ -14,7 +14,7 @@ Status: ☐ todo · ◐ in progress · ☑ done (awaiting your review) · ✔ ap
 | 3 | Failed state: remove the duplicate buttons in the status card; the action bar becomes Flip · Back · **Retry** · Solution · Next [7] | `PuzzleTrainer.tsx`, `trainer.css` | ✔ PR #14 |
 | 4 | Phone landscape works on wide phones (844–932px) and adds notch-side safe-area padding [2] | `shell.css`, `trainer.css` | ✔ PR #15 |
 | 5 | Dark mode: the Home "Today" card gets visible contrast [8] | `home.css` | ✔ PR #16 |
-| 6 | Installed-app theme and background colours match the new palette [10, part] | `vite.config.ts`, `index.html` | ☐ |
+| 6 | Installed-app theme and background colours match the new palette [10, part] | `vite.config.ts`, `index.html` | ✔ PR #17 |
 
 ## Phase 2: Puzzle screen layout
 

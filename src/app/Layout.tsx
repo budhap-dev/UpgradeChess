@@ -41,7 +41,8 @@ export function Layout() {
     if (settings.theme === 'system') root.removeAttribute('data-theme')
     else root.setAttribute('data-theme', settings.theme)
     const dark = settings.theme === 'dark' || (settings.theme === 'system' && matchMedia('(prefers-color-scheme: dark)').matches)
-    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#111712' : '#F4F2EC')
+    // index.html has one theme-color per system scheme; an explicit app theme overrides both
+    document.querySelectorAll('meta[name="theme-color"]').forEach((m) => m.setAttribute('content', dark ? '#111712' : '#F4F2EC'))
   }, [settings.theme])
 
   const groups: { label: string; items: NavItem[] }[] = [
