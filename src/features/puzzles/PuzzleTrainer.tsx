@@ -231,8 +231,10 @@ export function PuzzleTrainer({ mode, theme, options, autoAdvanceMs, locked, asi
           : state.status === 'failed'
             ? <button className="centre" onClick={centre(retry)}><Icon name="retry" size={22} /><span>Retry</span></button>
             : <button className="centre quiet" onClick={centre(hint)} disabled={!canHint} aria-label="Hint (makes this puzzle unrated)"><Icon name="bulb" size={22} /><span>Hint</span></button>}
-        <button onClick={() => view(1)} disabled={!viewing} aria-label="Next move"><Icon name="chevron-right" size={22} /><span>Forward</span></button>
-        {state.status === 'failed' && !autoAdvanceMs
+        {state.status === 'failed' && !solutionShown && !autoAdvanceMs
+          ? <button onClick={showSolution}><Icon name="eye" size={22} /><span>Solution</span></button>
+          : <button onClick={() => view(1)} disabled={!viewing} aria-label="Next move"><Icon name="chevron-right" size={22} /><span>Forward</span></button>}
+        {state.status === 'failed' && isRated && !autoAdvanceMs
           ? <button onClick={() => void next()}><Icon name="skip" size={22} /><span>Next</span></button>
           : <button onClick={() => void next()} disabled={!solving || !!autoAdvanceMs}><Icon name="skip" size={22} /><span>Skip</span></button>}
       </nav>

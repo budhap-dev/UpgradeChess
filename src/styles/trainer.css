@@ -42,9 +42,8 @@ kbd { font-family: var(--font-mono); font-size: 11px; padding: 1px 6px; border-r
   .trainer-panel > .trainer-status { order: 1; padding: 12px 14px; gap: 6px; }
   .trainer-status h2 { font-size: 19px; }
   .trainer-status .status-line { font-size: 14px; }
-  .trainer-status .status-actions:not([data-state="failed"]) { display: none; }
-  .trainer-status .status-actions { padding-top: 10px; margin-top: 2px; }
-  .trainer-status .status-actions .btn { min-height: 40px; flex: 1; }
+  /* the action bar carries every puzzle action on phones */
+  .trainer-status .status-actions { display: none; }
   .trainer-board-col { order: 2; max-width: none; flex: none; }
   .trainer-panel > * { order: 3; }
   /* edge to edge: break out of the 16px page gutter */
