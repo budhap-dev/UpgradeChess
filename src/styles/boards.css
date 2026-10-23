@@ -25,11 +25,19 @@
   .two-col > .board-col, .two-col > .board-wrap, .two-col > .panel { flex-basis: 100%; max-width: none; }
   .board-wrap { width: min(100%, calc(100dvh - 240px)); }
 }
+/* Short landscape (phones on their side, short windows): the page becomes two columns. The board fills
+   the height on the left; the header, panel and everything else in the page stack run down the right. */
 @media (orientation: landscape) and (max-height: 520px) {
-  .two-col { flex-wrap: nowrap; }
-  .two-col > .board-col, .two-col > .board-wrap { flex: 0 0 auto; width: min(52vw, calc(100dvh - 40px)); max-width: none; }
-  .two-col > .panel { flex: 1 1 0; }
-  .two-col > .board-col .board-wrap { width: 100%; max-width: none; min-width: 0; }
-  .two-col > .board-wrap { min-width: 0; }
+  :root { --land-board: calc(100dvh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); }
+  .content > .stack:has(.two-col, .trainer) { display: grid; grid-template-columns: auto minmax(0, 1fr); grid-auto-flow: row dense; align-items: start; gap: 0 20px; }
+  /* flatten the wrappers between the page stack and the board so their children join the grid */
+  .content > .stack .stack:has(> .trainer), .stack > .two-col, .stack > .trainer { display: contents; }
+  .content > .stack:has(.two-col, .trainer) > *, .content > .stack .stack:has(> .trainer) > *,
+  .stack > .two-col > *, .stack > .trainer > *, .stack .trainer-panel > * { grid-column: 2; margin-bottom: 12px; }
+  /* the board stays put while a long right column scrolls */
+  .content > .stack .two-col > .board-wrap, .content > .stack .two-col > .board-col, .content > .stack .trainer > .trainer-board-col { grid-column: 1; grid-row: 1 / span 20; margin: 0; position: sticky; top: calc(12px + env(safe-area-inset-top)); }
+  .two-col > .board-wrap, .two-col > .board-col .board-wrap { width: min(58vw, var(--land-board)); max-width: none; min-width: 0; }
+  .two-col > .board-col > .player-strip { display: none; }
+  .page-head h1 { font-size: 24px; }
   .page-head .sub { display: none; }
 }

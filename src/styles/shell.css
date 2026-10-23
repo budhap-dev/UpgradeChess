@@ -60,8 +60,8 @@
   .sidebar { display: flex; }
   .content { padding: 32px 40px 48px; }
 }
-/* Tablet and landscape phones: icon rail */
-@media (min-width: 820px) and (max-width: 1023px), (max-width: 819px) and (orientation: landscape) and (max-height: 520px) {
+/* Tablet and landscape phones (any width, e.g. 844/932px iPhones): icon rail */
+@media (min-width: 820px) and (max-width: 1023px), (orientation: landscape) and (max-height: 520px) {
   .shell { grid-template-columns: 72px minmax(0, 1fr); }
   .sidebar { display: flex; padding: 16px 10px; gap: 16px; align-items: center; }
   .brand { padding: 0; }
@@ -89,6 +89,9 @@
   .shell[data-focus] .tabbar { display: none; }
   .shell[data-focus] .content { padding-top: calc(8px + env(safe-area-inset-top)); }
 }
-@media (max-width: 819px) and (orientation: landscape) and (max-height: 520px) {
-  .content { padding: calc(12px + env(safe-area-inset-top)) 16px 24px; }
+/* Short landscape: tight padding, and clear of the notch / Dynamic Island on either side */
+@media (orientation: landscape) and (max-height: 520px) {
+  .shell { grid-template-columns: calc(72px + env(safe-area-inset-left)) minmax(0, 1fr); }
+  .sidebar { padding-left: calc(10px + env(safe-area-inset-left)); position: sticky; top: 0; height: 100dvh; overflow-y: auto; scrollbar-width: none; }
+  .content, .shell[data-focus] .content { padding: calc(12px + env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) 16px; }
 }
