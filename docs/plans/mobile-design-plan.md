@@ -20,7 +20,7 @@ Status: ☐ todo · ◐ in progress · ☑ done (awaiting your review) · ✔ ap
 
 | # | Change | Files | Status |
 |---|---|---|---|
-| 7 | Board pinned under the app bar; a fixed-height feedback strip under the board swaps content per state, so the board never moves or slides under the action bar [1] | `trainer.css`, `PuzzleTrainer.tsx` | ☐ |
+| 7 | Board pinned under the app bar; a fixed-height feedback strip under the board swaps content per state, so the board never moves or slides under the action bar [1] | `trainer.css`, `PuzzleTrainer.tsx` | ✔ PR #18 |
 | 8 | Loading state: an empty, dimmed board instead of a fake start position; hide the 1500 chip until the rating is known [11] | `PuzzleTrainer.tsx`, `PuzzlesPage.tsx` | ☐ |
 | 9 | After a solve, show only readable motif pills (drop raw tags like "crushing", "veryLong"); source game becomes a 44px "Open on Lichess" button [12] | `PuzzleTrainer.tsx` | ☐ |
 | 10 | Promotion picker (Q/R/B/N) instead of auto-queen, so underpromotion puzzles are solvable [19] | `Board.tsx` | ☐ |

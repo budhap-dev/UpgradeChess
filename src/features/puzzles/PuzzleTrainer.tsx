@@ -120,7 +120,7 @@ export function PuzzleTrainer({ mode, theme, options, autoAdvanceMs, locked, asi
       </div>
 
       <div className="trainer-panel">
-        <section className="card trainer-status" aria-live="polite">
+        <section className="card trainer-status" data-state={state.status} aria-live="polite">
           {state.status === 'loading' && <p className="muted">Finding a puzzle…</p>}
           {state.status === 'empty' && <p>No puzzles available for this mode.</p>}
           {(state.status === 'intro' || state.status === 'solving') && p && (
@@ -131,15 +131,18 @@ export function PuzzleTrainer({ mode, theme, options, autoAdvanceMs, locked, asi
                 <Elapsed since={state.startedAt} running={state.status === 'solving'} />
               </div>
               <p className="muted status-line">
-                {state.step > 0 ? `Good, keep going (${Math.ceil((p.solution.length - state.step) / 2)} to go)` : 'Find the best move'}
-                <span className="mob-only"> · rated {p.rating}</span>
+                {/* phones show the hint in this one line; desktop uses the callout below */}
+                {state.hints > 0 && <span className="mob-only warn">Hint {Math.min(state.hints, MAX_HINTS)}/{MAX_HINTS}: {state.hints >= 2 ? 'ringed piece to the ringed square' : 'the ringed piece moves first'} · unrated</span>}
+                <span className={state.hints > 0 ? 'desk-only' : undefined}>
+                  {state.step > 0 ? `Good, keep going (${Math.ceil((p.solution.length - state.step) / 2)} to go)` : 'Find the best move'}
+                  <span className="mob-only"> · {state.practice ? 'practice, not rated' : `rated ${p.rating}`}</span>
+                </span>
               </p>
               <div className="row desk-only status-pills">
                 <span className="pill mono">Rated {p.rating}</span>
                 <span className="pill">Themes hidden until solved</span>
                 {state.practice && <span className="pill warn">Practice, not rated</span>}
               </div>
-              {state.practice && <p className="pill warn mob-only" style={{ alignSelf: 'flex-start' }}>Practice, not rated</p>}
             </>
           )}
           {state.status === 'solved' && p && (
@@ -168,7 +171,7 @@ export function PuzzleTrainer({ mode, theme, options, autoAdvanceMs, locked, asi
             </p>
           )}
           {state.hints > 0 && !finished && (
-            <div className="callout warn">
+            <div className="callout warn desk-only">
               <Icon name="bulb" size={18} />
               <span>Hint {Math.min(state.hints, MAX_HINTS)} of {MAX_HINTS}: {state.hints >= 2 ? 'move the ringed piece to the ringed square.' : 'the ringed piece makes the first move.'} Hinted puzzles are unrated and earn half XP.</span>
             </div>

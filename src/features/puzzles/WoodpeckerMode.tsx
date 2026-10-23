@@ -59,7 +59,7 @@ export function WoodpeckerMode({ aside }: { aside?: ReactNode }) {
   if (queue) {
     return (
       <div className="stack">
-        <div className="card stack tight">
+        <div className="card stack tight woodpecker-head">
           <div className="row between">
             <span className="row" style={{ gap: 6 }}>
               <span className="pill accent mono">Cycle {(set?.cycles.length ?? 0) + 1} · {progress.i}/{queue.length}</span>

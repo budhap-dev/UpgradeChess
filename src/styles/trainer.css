@@ -30,6 +30,13 @@ kbd { font-family: var(--font-mono); font-size: 11px; padding: 1px 6px; border-r
 .action-bar button.centre.quiet { background: var(--surface); color: var(--accent); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--accent) 55%, var(--line)); }
 .shell:not([data-focus]) .action-bar { display: none; }
 
+/* Phone height budget around the board: top padding + app bar + mode chips above; feedback strip + action bar below.
+   Modes that add a card above the trainer (themes row, Storm stats, Woodpecker progress) raise it. */
+.content { --feedback-h: 88px; --trainer-chrome: 296px; }
+.content:has(#theme-picker) { --trainer-chrome: 350px; }
+.content:has(.woodpecker-head) { --trainer-chrome: 430px; }
+.content:has(.storm-stats) { --trainer-chrome: 450px; }
+
 /* Puzzles page header */
 .mode-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px 20px; flex-wrap: wrap; }
 .app-bar { display: flex; align-items: center; gap: 6px; min-height: 52px; }
@@ -39,15 +46,19 @@ kbd { font-family: var(--font-mono); font-size: 11px; padding: 1px 6px; border-r
 @media (max-width: 819px) {
   .trainer { flex-direction: column; flex-wrap: nowrap; align-items: stretch; gap: 10px; }
   .trainer-panel { display: contents; }
-  .trainer-panel > .trainer-status { order: 1; padding: 12px 14px; gap: 6px; }
+  /* Board first, then a fixed-height feedback strip whose content swaps per state, so the board never moves */
+  .trainer-board-col { order: 1; max-width: none; flex: none; }
+  .trainer-panel > * { order: 3; }
+  .trainer-panel > .trainer-status { order: 2; height: var(--feedback-h); overflow: hidden; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-content: center; gap: 4px 10px; padding: 10px 14px; }
+  .trainer-status > * { grid-column: 1 / -1; min-width: 0; }
+  .trainer-status:is([data-state="solved"], [data-state="failed"]) > .status-head { grid-column: 1; }
+  .trainer-status > .status-pills { grid-column: 2; grid-row: 1; flex-wrap: nowrap; }
   .trainer-status h2 { font-size: 19px; }
-  .trainer-status .status-line { font-size: 14px; }
+  .trainer-status .status-line, .trainer-status .status-meta { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   /* the action bar carries every puzzle action on phones */
   .trainer-status .status-actions { display: none; }
-  .trainer-board-col { order: 2; max-width: none; flex: none; }
-  .trainer-panel > * { order: 3; }
-  /* edge to edge: break out of the 16px page gutter */
-  .shell[data-focus] .trainer-board-col .board-wrap { width: 100vw; max-width: min(100vw, calc(100dvh - 276px)); margin: 0 auto; position: relative; left: 50%; transform: translateX(-50%); }
+  /* edge to edge: break out of the 16px page gutter; height budget = everything else on screen (see --trainer-chrome) */
+  .shell[data-focus] .trainer-board-col .board-wrap { width: 100vw; max-width: min(100vw, calc(100dvh - var(--trainer-chrome) - env(safe-area-inset-top) - env(safe-area-inset-bottom))); min-width: 200px; margin: 0 auto; position: relative; left: 50%; transform: translateX(-50%); }
   .trainer-board-col .board-wrap { width: min(100%, calc(100dvh - 300px)); max-width: none; min-width: min(100%, 260px); margin: 0 auto; }
   .shell[data-focus] .content { padding-bottom: calc(var(--tabbar-h) + 28px + env(safe-area-inset-bottom)); }
 }
