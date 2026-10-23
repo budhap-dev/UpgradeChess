@@ -14,8 +14,9 @@ export default defineConfig({
         name: 'UpgradeChess',
         short_name: 'UpgradeChess',
         description: 'Guided chess training: tactics, openings, endgames, game review — with points and rating reflection.',
-        theme_color: '#4d7a44',
-        background_color: '#f4f0e4',
+        // match the page background (tokens.css --bg) so the splash and task switcher don't flash the old green
+        theme_color: '#F4F2EC',
+        background_color: '#F4F2EC',
         display: 'standalone',
         start_url: '/',
         icons: [
