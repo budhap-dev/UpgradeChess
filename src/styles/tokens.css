@@ -14,6 +14,8 @@
   --pad: 22px; --gap: 16px;
   --board-radius: 10px; --board-shadow: var(--shadow-board);
   --tabbar-h: 64px;
+  /* the dark Home hero card: sidebar colour in light mode, lifted surface + accent edge in dark */
+  --hero-bg: var(--side-bg); --hero-line: transparent;
   color-scheme: light;
 }
 :root[data-theme="dark"] {
@@ -22,6 +24,7 @@
   --accent: #9CCB8A; --accent-ink: #10160F; --accent-soft: #24362A; --accent-soft-ink: #CFE6C5;
   --good: #8FC27E; --warn: #E0AE57; --warn-soft: #2E2615; --bad: #E07A7A; --bad-soft: #3A2020;
   --side-bg: #0C120E; --side-active: #1C2B22; --side-card: #152019;
+  --hero-bg: var(--surface-2); --hero-line: color-mix(in srgb, var(--accent) 35%, var(--line));
   --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.25);
   --shadow-board: 0 1px 2px rgba(0,0,0,.35), 0 12px 32px rgba(0,0,0,.4);
   color-scheme: dark;
@@ -33,6 +36,7 @@
     --accent: #9CCB8A; --accent-ink: #10160F; --accent-soft: #24362A; --accent-soft-ink: #CFE6C5;
     --good: #8FC27E; --warn: #E0AE57; --warn-soft: #2E2615; --bad: #E07A7A; --bad-soft: #3A2020;
     --side-bg: #0C120E; --side-active: #1C2B22; --side-card: #152019;
+    --hero-bg: var(--surface-2); --hero-line: color-mix(in srgb, var(--accent) 35%, var(--line));
     --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.25);
     --shadow-board: 0 1px 2px rgba(0,0,0,.35), 0 12px 32px rgba(0,0,0,.4);
     color-scheme: dark;
