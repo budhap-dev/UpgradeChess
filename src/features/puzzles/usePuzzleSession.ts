@@ -71,7 +71,8 @@ export function usePuzzleSession(mode: Mode, theme: string | undefined, playerRa
       }
     }
     setS((p) => ({ ...p, status: 'loading', ratingDelta: null, xpGained: null, hints: 0, hintSquare: null, wrongSquare: null, practice: false }))
-    let target = ratingRef.current
+    // read the stored rating directly: on first mount the live-query prop is still the 1500 default
+    let target = (await db.playerRating.get('tactics'))?.rating ?? ratingRef.current
     if (mode === 'streak') target = 800 + streakRef.current * 60
     if (mode === 'storm') target = 700 + stormCount.current * 45
     let puzzle: Puzzle | null = null
